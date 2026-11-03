@@ -51,6 +51,16 @@ for (const url of URLS) {
     console.log(`distinct HH:MM (${times.length}): ${times.slice(0, 40).join(" ")}`);
     for (const c of around(s, /\b([01]\d|2[0-3]):[0-5]\d\b/, 6)) console.log(`  time ctx: …${c}…`);
     for (const p of prices) console.log(`  price ctx: …${p}…`);
+    // Operator status tables: "Dublin - Holyhead 07:30 11:00 Ulysses On Time"
+    const rows = [...s.matchAll(/([A-Z][a-z]+(?: [A-Z][a-z]+)?) - ([A-Z][a-z]+(?: [A-Z][a-z]+)?) (\d\d:\d\d) (\d\d:\d\d) ((?:[A-Z][a-z]+ ?){1,4}?) (On Time|Arrived|Departed|Delayed|Cancelled|Scheduled|Not Operating|[A-Z][a-z]+(?: [A-Z][a-z]+)?)/g)];
+    for (const r of rows.slice(0, 20)) console.log(`  row: ${r[1]} → ${r[2]} dep ${r[3]} arr ${r[4]} ship ${r[5].trim()} status ${r[6]}`);
+    const links = [...new Set([...html.matchAll(/href="([^"]*(?:timetable|holyhead|fishguard|rosslare|pembroke|dublin)[^"]*)"/gi)].map(m => m[1]))];
+    if (links.length) console.log(`  route links: ${links.slice(0, 25).join(" ")}`);
+    const apis = [...new Set([...html.matchAll(/["'](\/?(?:api|search|ajax|graphql)[^"'\s]{0,80}|https?:\/\/[^"'\s]*(?:api|search|price|fare)[^"'\s]{0,60})["']/gi)].map(m => m[1]))];
+    if (apis.length) console.log(`  api-like urls: ${apis.slice(0, 20).join(" ")}`);
+    for (const m of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi)) {
+      const j = m[1]; if (/price|offer|departure|trip/i.test(j)) console.log(`  ld+json: ${j.replace(/\s+/g, " ").slice(0, 600)}`);
+    }
   } catch (e) {
     console.log(`\n=== ${url}\nERROR ${e.name}: ${e.message}`);
   }
