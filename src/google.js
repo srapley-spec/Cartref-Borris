@@ -36,3 +36,11 @@ export async function driveMinutes({ key, origin, destination, departLocalMin, n
   if (!d) throw new Error("Google Routes: no route");
   return Math.round(parseInt(d, 10) / 60);
 }
+
+/** Real time (ms since epoch) -> local minutes on the UK/IE wall clock. */
+export function utcMsToLocalMin(ms) {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour12: false,
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).formatToParts(new Date(ms));
+  const g = Object.fromEntries(parts.map(p => [p.type, p.value]));
+  return Date.UTC(+g.year, +g.month - 1, +g.day, +g.hour % 24, +g.minute) / 60000;
+}

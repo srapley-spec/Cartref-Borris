@@ -39,7 +39,7 @@ async function openPage({ google } = {}) {
     await route.fulfill(google ? google(calls.at(-1)) : { status: 500, body: "no" });
   });
   await page.goto(base);
-  await page.waitForSelector(".opt");
+  await page.waitForSelector("#hero .opt");
   return { page, ctx, calls };
 }
 
@@ -49,66 +49,117 @@ test("UTC conversion uses the London offset (GMT in Nov, BST in Jul)", () => {
   assert.equal(localToUtcIso(m("2026-07-20T09:00")), "2026-07-20T08:00:00.000Z");
 });
 
-test("shows outbound and return options with leave/arrive/door-to-door and the unverified banner", async () => {
+const ids = (page, sel = "#hero .opt, #list .opt") => page.$$eval(sel, els => els.map(e => e.dataset.id));
+const seg = (page, group, v) => page.click(`#${group} button[data-v="${v}"]`);
+
+test("Leave now (default): Signal card with Leave by → At Borris, Total journey, countdown, next sailing and ferry panel", async () => {
   const { page, ctx } = await openPage();
-  assert.equal(await page.inputValue("#out"), "2026-11-10");
-  assert.equal(await page.inputValue("#back"), "2026-11-17");
-  assert.match(await page.textContent("#banner"), /not yet verified/);
-  const out = await page.$$("#outList .opt"), back = await page.$$("#backList .opt");
-  assert.ok(out.length >= 6 && back.length >= 6, `${out.length}/${back.length}`);
-  const first = await page.textContent("#outList .opt");
-  assert.match(first, /Leave home\s*\d\d:\d\d/); assert.match(first, /Arrive Borris/); assert.match(first, /Door to door\s*\d+h\d\d/);
+  assert.equal(await page.getAttribute('#questionSeg button[data-v="now"]', "aria-pressed"), "true");
+  assert.equal(await page.isVisible("#timeRow"), false);
+  assert.match(await page.textContent("#hero .hero-cap"), /If you leave now · 10:00/);
+  const best = page.locator("#hero > .opt").first();
+  const text = await best.textContent();
+  // 19:30 − 30 check-in − 15 margin = 18:45; − 285 drive − 30 (1 stop, the default) = 13:30.
+  assert.match(text, /Leave by\s*13:30/); assert.match(text, /At Borris/);
+  assert.match(text, /Total journey \d+h \d\dm/); assert.match(text, /leave in 3h 30m/);
+  assert.match(text, /Arrives first/);
+  assert.match(text, /Next: 19:30 Irish Ferries from Holyhead/);
+  assert.match(text, /Timetable departure\s*19:30/); assert.match(text, /Expected departure\s*Not live/); assert.match(text, /At Dublin Port\s*23:00/);
+  assert.equal(await best.locator(".op").textContent(), "IFIrish Ferries");
+  assert.match(await page.textContent("#hero .next-best"), /Next best[\s\S]*Leave by/);
+  assert.match(await page.textContent("#banner"), /not yet checked/);
   assert.match(await page.textContent("#status"), /No Google key/);
   await ctx.close();
 });
 
-test("Day/Night filter and cost ranking with entered fares (re-ranks, persists, unpriced kept)", async () => {
+test("Arrive by: time box appears; options arrive in time, latest leave labelled", async () => {
   const { page, ctx } = await openPage();
-  const total = (await page.$$("#outList .opt")).length;
-  await page.click('.seg[data-k="outPref"] button[data-v="overnight"]');
-  const night = await page.$$eval("#outList .opt", els => els.map(e => e.textContent));
-  assert.ok(night.length > 0 && night.every(t => t.includes("Overnight")));
-  await page.click('.seg[data-k="outPref"] button[data-v="day"]');
-  const day = await page.$$eval("#outList .opt", els => els.map(e => e.textContent));
-  assert.ok(day.every(t => !t.includes("Overnight")));
-  assert.equal(night.length + day.length, total);
-
-  await page.click('.seg[data-k="outPref"] button[data-v="any"]');
-  await page.click('.seg[data-k="sort"] button[data-v="cost"]');
-  const ids = await page.$$eval("#outList .opt", els => els.map(e => e.dataset.id));
-  await page.fill(`input.fare[data-id="${ids[3]}"]`, "149"); await page.press(`input.fare[data-id="${ids[3]}"]`, "Enter");
-  await page.locator(`input.fare[data-id="${ids[3]}"]`).blur();
-  await page.fill(`input.fare[data-id="${ids[1]}"]`, "99.50"); await page.locator(`input.fare[data-id="${ids[1]}"]`).blur();
-  const after = await page.$$eval("#outList .opt", els => els.map(e => e.dataset.id));
-  assert.deepEqual(after.slice(0, 2), [ids[1], ids[3]]);
-  assert.equal(after.length, total);
-  assert.match(await page.textContent("#outList .opt"), /£99\.50/);
-  await page.reload(); await page.waitForSelector(".opt");
-  assert.deepEqual((await page.$$eval("#outList .opt", els => els.map(e => e.dataset.id))).slice(0, 2), [ids[1], ids[3]]);
+  await seg(page, "questionSeg", "arrive");
+  assert.equal(await page.isVisible("#timeRow"), true);
+  await page.fill("#time", "18:00"); await page.locator("#time").dispatchEvent("change");
+  assert.match(await page.textContent("#hero .hero-cap"), /Arrive Borris by 18:00 · Tue 10 Nov/);
+  assert.match(await page.textContent("#hero .tag.best"), /Latest for 18:00/);
   await ctx.close();
 });
 
-test("with a Google key: legs requested with key header, future departure time, and results replace estimates", async () => {
+test("Direction toggle answers the return journey (At home), using the Leave Borris date", async () => {
+  const { page, ctx } = await openPage();
+  await seg(page, "dirSeg", "back"); await seg(page, "questionSeg", "fastest");
+  assert.match(await page.textContent("#hero .hero-cap"), /leaving Tue 17 Nov/);
+  assert.match(await page.textContent("#hero .opt"), /At home/);
+  assert.ok((await ids(page)).every(id => /-(DUB|RSL)-/.test(id)));
+  await ctx.close();
+});
+
+test("Day/Overnight partition the options; cost ranking with entered fares re-ranks, persists, keeps unpriced", async () => {
+  const { page, ctx } = await openPage();
+  await seg(page, "questionSeg", "fastest");
+  const total = (await ids(page)).length;
+  await page.click("#ctx summary");
+  await seg(page, "prefSeg", "overnight");
+  const night = await page.$$eval("#hero .opt, #list .opt", els => els.map(e => e.textContent));
+  assert.ok(night.length > 0 && night.every(t => t.includes("Overnight")));
+  await seg(page, "prefSeg", "day");
+  const day = await page.$$eval("#hero .opt, #list .opt", els => els.map(e => e.textContent));
+  assert.ok(day.every(t => !t.includes("Overnight")));
+  assert.equal(night.length + day.length, total);
+  await seg(page, "prefSeg", "any"); await seg(page, "sortSeg", "cost");
+  const before = await ids(page);
+  await page.fill(`input.fare-in[data-id="${before[3]}"]`, "149"); await page.locator(`input.fare-in[data-id="${before[3]}"]`).dispatchEvent("change");
+  await page.fill(`input.fare-in[data-id="${before[1]}"]`, "99.50"); await page.locator(`input.fare-in[data-id="${before[1]}"]`).dispatchEvent("change");
+  const after = await ids(page);
+  assert.deepEqual(after.slice(0, 2), [before[1], before[3]]);
+  assert.equal(after.length, total);
+  assert.match(await page.textContent("#hero .opt"), /£99\.50/);
+  assert.match(await page.textContent("#hero .tag.best"), /Cheapest/);
+  await page.reload(); await page.waitForSelector("#hero .opt");
+  assert.deepEqual((await ids(page)).slice(0, 2), [before[1], before[3]]);
+  await ctx.close();
+});
+
+test("Stops move the leave time by minutes-per-stop; fast ferry toggle is explicit and remembered", async () => {
+  const { page, ctx } = await openPage();
+  await seg(page, "questionSeg", "fastest");
+  await page.click("#ctx summary");
+  const leaveOf = async () => page.$eval("#hero .opt .optbig", e => e.textContent);
+  const id0 = (await ids(page))[0];
+  const t1 = await leaveOf();
+  await page.click("#stopsUp");
+  assert.equal((await ids(page))[0], id0);
+  const t2 = await leaveOf();
+  const mins = (s) => +s.slice(0, 2) * 60 + +s.slice(3);
+  assert.equal(mins(t1) - mins(t2), 30);
+  assert.match(await page.textContent("#contextSummary"), /2 stops/);
+  assert.equal(await page.getAttribute("#fastFerry", "aria-pressed"), "false");
+  await page.click("#fastFerry");
+  assert.equal(await page.getAttribute("#fastFerry", "aria-pressed"), "true");
+  assert.match(await page.textContent("#contextSummary"), /Fast ferry on/);
+  await page.reload(); await page.waitForSelector("#hero .opt");
+  assert.equal(await page.getAttribute("#fastFerry", "aria-pressed"), "true");
+  await ctx.close();
+});
+
+test("with a Google key: legs requested with key header and future departure times; results replace estimates", async () => {
   const { page, ctx, calls } = await openPage({ google: () => ({ status: 200, contentType: "application/json", body: JSON.stringify({ routes: [{ duration: "15600s" }] }) }) });
-  await page.click("details summary");
+  await page.click("#settingsBtn");
   await page.fill("#key", "test-key-not-real");
   await page.click("#saveSettings");
-  await page.waitForFunction(() => !document.querySelector("#outList").textContent.includes("*"));
+  await page.waitForFunction(() => !document.querySelector("#hero").textContent.includes("(estimate)"));
   assert.ok(calls.length > 0);
   assert.equal(calls[0].headers["x-goog-api-key"], "test-key-not-real");
   assert.match(calls[0].headers["x-goog-fieldmask"], /routes\.duration/);
   assert.ok(calls.every(c => Date.parse(c.body.departureTime) > NOW));
   assert.ok(calls.some(c => /SG6 3LT/.test(c.body.origin.address)));
-  assert.match(await page.textContent("#outList .legs"), /Drive 4h20 /);
+  assert.match(await page.textContent("#hero .chips"), /Drive 4h 50m incl\. 1 stop \(30 min\) to/);
   await ctx.close();
 });
 
 test("Google failure is reported and estimates are used (nothing hidden)", async () => {
   const { page, ctx } = await openPage({ google: () => ({ status: 403, body: "API key not valid" }) });
-  const before = (await page.$$("#outList .opt")).length;
-  await page.click("details summary"); await page.fill("#key", "bad"); await page.click("#saveSettings");
+  const before = (await ids(page)).length;
+  await page.click("#settingsBtn"); await page.fill("#key", "bad"); await page.click("#saveSettings");
   await page.waitForFunction(() => /failed/.test(document.querySelector("#status").textContent));
   assert.match(await page.textContent("#status"), /403/);
-  assert.equal((await page.$$("#outList .opt")).length, before);
+  assert.equal((await ids(page)).length, before);
   await ctx.close();
 });

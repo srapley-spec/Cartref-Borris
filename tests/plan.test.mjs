@@ -117,3 +117,91 @@ test("data integrity: every route references known ports/operators, has sources,
     for (const x of r.sailings) assert.match(x.dep, /^\d\d:\d\d$/);
   }
 });
+
+// ---- 3 Nov (second request): questions, stops, fast ferry, fastest-by-traffic
+import { answer, countdown, AROUND_WINDOW } from "../src/core/plan.js";
+
+test("stops add minutes to the UK drive only (out: before the ferry; back: after)", () => {
+  const s = { ...settings, stops: 2, stopMin: 25 };
+  const out = options(data, { dir: "out", date: "2026-11-20", drive: est, settings: s }).find(x => x.id === "irish-PEM-RSL|2026-11-20|14:45");
+  assert.equal(out.driveTo.min, 295 + 50); assert.equal(out.driveTo.stops, 2); assert.equal(out.driveFrom.min, 80);
+  assert.equal(out.leave, T("2026-11-20", "08:15"));
+  const back = options(data, { dir: "back", date: "2026-11-27", drive: est, settings: s }).find(x => x.id === "irish-RSL-PEM|2026-11-27|08:45");
+  assert.equal(back.driveTo.min, 80); assert.equal(back.driveFrom.min, 295 + 50);
+});
+
+test("fast ferry: off by default, included only when on and in season", () => {
+  const june = (ff) => sailingsOn(data, "out", ["2026-06-12"], { fastFerry: ff }).filter(s => s.fast);
+  assert.equal(june(false).length, 0);
+  const on = june(true);
+  assert.equal(on.length, 1); assert.equal(on[0].durMin, 135);
+  assert.equal(sailingsOn(data, "out", ["2026-11-20"], { fastFerry: true }).filter(s => s.fast).length, 0, "out of season in November");
+  const o = options(data, { dir: "out", date: "2026-06-12", drive: est, settings: { ...settings, fastFerry: true } }).find(x => x.fast);
+  assert.ok(o.flags.includes("fast-ferry times from memory"));
+});
+
+test("Leave now: only options you can still leave for, earliest arrival first, with countdown", () => {
+  const nowMin = T("2026-11-03", "10:00");
+  const a = answer(data, { question: "now", dir: "out", nowMin, drive: est, settings });
+  assert.ok(a.list.length > 2);
+  assert.ok(a.list.every(o => o.leave >= nowMin));
+  for (let i = 1; i < a.list.length; i++) assert.ok(a.list[i - 1].arrive <= a.list[i].arrive);
+  assert.equal(a.label, "Arrives first");
+  assert.equal(a.best.leaveInMin, a.best.leave - nowMin);
+  // Boundary: Stena 16:00 means at Holyhead by 14:45 and leaving at exactly 10:00 (no stops here): still makeable.
+  assert.equal(a.best.id, "stena-HHD-DUB|2026-11-03|16:00");
+  assert.equal(a.best.leaveInMin, 0);
+  const later = answer(data, { question: "now", dir: "out", nowMin: nowMin + 1, drive: est, settings });
+  assert.ok(!later.list.some(o => o.id === "stena-HHD-DUB|2026-11-03|16:00"), "one minute later it has gone");
+});
+
+test("Arrive by: arrive no later than the target, latest leave first; impossible target gives Least late", () => {
+  const a = answer(data, { question: "arrive", dir: "out", date: "2026-11-20", time: "18:00", drive: est, settings });
+  assert.ok(a.list.length > 1);
+  assert.ok(a.list.every(o => o.arrive <= T("2026-11-20", "18:00")));
+  for (let i = 1; i < a.list.length; i++) assert.ok(a.list[i - 1].leave >= a.list[i].leave);
+  assert.equal(a.label, "Latest for 18:00"); assert.equal(a.leastLate, false);
+  // Only a Friday 14:45 sailing exists: nothing can arrive by Fri 10:00, so show the least late.
+  const pemFri = { ...data, routes: [{ ...data.routes.find(r => r.id === "irish-PEM-RSL"), sailings: [{ dep: "14:45", durMin: 241, days: [5] }] }] };
+  const late = answer(pemFri, { question: "arrive", dir: "out", date: "2026-11-20", time: "10:00", drive: est, settings });
+  assert.equal(late.leastLate, true); assert.equal(late.label, "Least late");
+  assert.ok(late.list.length > 0);
+  for (let i = 1; i < late.list.length; i++) assert.ok(late.list[i - 1].arrive <= late.list[i].arrive);
+});
+
+test("Leave around: leave within −60/+180 min of the chosen time", () => {
+  const target = T("2026-11-20", "08:00");
+  const a = answer(data, { question: "around", dir: "out", date: "2026-11-20", time: "08:00", drive: est, settings });
+  assert.ok(a.list.length > 0);
+  assert.ok(a.list.every(o => o.leave >= target - AROUND_WINDOW.before && o.leave <= target + AROUND_WINDOW.after));
+});
+
+test("Fastest: traffic at each leave time decides; avoiding rush hour can win over a shorter crossing", () => {
+  // Rush hour 06:30–09:30 makes the UK drive 400 min, otherwise 280; Irish legs as estimated.
+  const rush = (from, to, m) => {
+    if (from !== "home") return null;
+    const hm = m % 1440;
+    return { min: hm >= 390 && hm <= 570 ? 400 : 280, source: "google" };
+  };
+  const drive = makeDrive(data, rush);
+  const a = answer(data, { question: "fastest", dir: "out", date: "2026-11-20", drive, settings });
+  for (let i = 1; i < a.list.length; i++) assert.ok(a.list[i - 1].totalMin <= a.list[i].totalMin);
+  const hm = a.best.leave % 1440;
+  assert.ok(!(hm >= 390 && hm <= 570), `fastest leaves at ${fmt(a.best.leave).time}, in rush hour`);
+  assert.equal(a.label, "Fastest");
+});
+
+test("Cheapest within a question re-ranks the eligible set by price, keeps unpriced", () => {
+  const base = answer(data, { question: "fastest", dir: "out", date: "2026-11-20", drive: est, settings });
+  const fares = { [base.list[4].id]: { amount: 120 } };
+  const a = answer(data, { question: "fastest", dir: "out", date: "2026-11-20", sort: "cost", drive: est, fares, settings });
+  assert.equal(a.best.id, base.list[4].id); assert.equal(a.label, "Cheapest");
+  assert.equal(a.list.length, base.list.length);
+});
+
+test("countdown wording", () => {
+  assert.equal(countdown(212), "leave in 3h 32m");
+  assert.equal(countdown(7), "leave in 7 min");
+  assert.equal(countdown(1440 + 61), "leave in 1 day 1h 01m");
+  assert.equal(countdown(-5), "leave time passed 5 min ago");
+});

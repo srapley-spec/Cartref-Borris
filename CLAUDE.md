@@ -6,6 +6,9 @@ Read this first, every session. The context for this project lives in this repo,
 house in Borris, Co. Carlow and back, by car and ferry. For any outbound and return dates: every option
 door to door, ranked **by time** and **by cost**, with a **day / overnight** choice for each direction.
 
+**UI (Sam, 3 Nov):** mirror Cartref Commute's Signal design (questions, Leave by → At destination, Total journey,
+leg panels). Leave by and the sailing's timetable departure are the core answers; don't hide or demote them.
+
 ## Where the context is
 1. `docs/architecture.md`: layers, data sources, what is verified and what isn't, decisions log, known gaps.
 2. `docs/stories/`: one file per capability, with acceptance criteria and the tests that prove it.
