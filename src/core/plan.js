@@ -121,8 +121,13 @@ export function options(data, { dir, date, dates, drive, fares = {}, settings })
       overnightCrossing: isOvernight(s.dep, s.arr),
       fare,
       verified: !!(data.verified || r.verified),
+      verifiedBy: r.verified ? r.verified.by : null,
+      verifiedOn: r.verified ? r.verified.on : null,
+      typicalFare: r.typicalFare || null,
       flags: [
         ...(data.verified || r.verified ? [] : ["timetable unverified"]),
+        ...(r.verified && r.verified.by === "aggregator" ? ["times via AFerry, not the operator"] : []),
+        ...(s.sailing.days ? ["days of operation not confirmed"] : []),
         ...(s.sailing.sourceNote ? [s.sailing.sourceNote] : []),
         ...(driveTo.source === "estimate" || driveFrom.source === "estimate" ? ["drive time estimated"] : []),
         ...(fare ? [] : ["no price yet"]),

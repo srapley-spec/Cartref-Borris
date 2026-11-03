@@ -68,7 +68,9 @@ test("Leave now (default): Signal card with Leave by → At Borris, Total journe
   assert.equal(await best.locator(".op img").getAttribute("alt"), "Irish Ferries");
   assert.ok(await best.locator(".op img").evaluate(i => i.complete && i.naturalWidth > 0), "logo loads");
   assert.match(await page.textContent("#hero .next-best"), /Next best[\s\S]*Leave by/);
-  assert.match(await page.textContent("#banner"), /not yet checked/);
+  assert.match(await page.textContent("#banner"), /checked 3 Nov 2026: Irish Ferries from its own pages, Stena via AFerry/);
+  assert.match(text, /Times checked with Irish Ferries Tue 3 Nov/);
+  assert.match(text, /No quote yet · typical £163 \(AFerry average\)/);
   assert.match(await page.textContent("#status"), /No Google key/);
   await ctx.close();
 });

@@ -26,15 +26,22 @@ For a sailing departing `dep` with crossing `durMin` and operator check-in `chec
   a 07:30 boat is overnight travel even though the crossing is in daylight).
 
 ## Data sources and how verified they are (3 Nov 2026)
-- **Sailings: unverified.** stenaline.co.uk, irishferries.com and poferries.com were blocked by the build
-  session's network policy. Times come from web-search snippets of Irish Ferries' update pages, a news report of
-  Stena's Holyhead timetable, and Direct Ferries / AFerry listings (URLs per route in the data). Irish Ferries
-  Dublin→Holyhead 08:05 and 14:30 are from memory. Seasonal changes are not modelled.
+- **Sailings: checked 3 Nov 2026** by `tools/probe-sources.mjs`, run on GitHub's runner (manual workflow
+  "Probe ferry sources"; the build session's network blocks these hosts). Irish Ferries routes match Irish Ferries'
+  own sailing-updates status tables; all routes match AFerry's per-date departure lists. Stena's pages carry no times
+  in HTML and its booking API is behind Cloudflare Turnstile, so Stena times are via AFerry only (flagged per option).
+  Day-of-week patterns (Pembroke 02:45, Rosslare 20:45) are from Direct Ferries and unconfirmed (flagged). The probe
+  corrected Irish Ferries Dublin→Holyhead to 01:15/07:30/13:45/19:45. Seasonal changes are not modelled.
+- **What each source allows (probe, 3 Nov):** Irish Ferries status pages: readable HTML, today's scheduled times,
+  ship, status. AFerry: readable, per-date departure list, average car fare per operator/route; per-sailing prices
+  load in a JS micro-frontend (not yet investigated). Direct Ferries: Cloudflare 403. Ferryhopper/Ferryscanner:
+  prose only. Stena: homepage "from" price only.
+- **Typical fares:** AFerry's average car single per operator and route, shown as "typical", never ranked on.
 - **Excluded:** Liverpool–Dublin (P&O may have ended it Dec 2023; conflicting evidence), Cairnryan–Belfast/Larne
   (not competitive for south Carlow).
 - **Drive times:** Google Routes API when a key is in Settings (cached per leg per 30-minute departure bucket in
   localStorage); otherwise rough estimates in the data, marked `*`. The estimates are unmeasured.
-- **Fares: none fetched yet.** Neither operator publishes a fare API. Sam chose to investigate automated fetching
+- **Fares (per sailing): none fetched yet.** Neither operator publishes a fare API. Sam chose to investigate automated fetching
   (scraping); that needs the operator domains allowed in the environment and must run server-side (browsers
   block cross-site reads). Until then Sam types the quote he sees; it is saved on the phone and re-ranks.
 
@@ -53,9 +60,9 @@ For a sailing departing `dep` with crossing `durMin` and operator check-in `chec
 - **3 Nov 2026** A Google key was pasted into chat. It was not used or stored (project rule); Sam asked to regenerate it.
 
 ## Known gaps / next
-1. Verify every sailing against the operator sites (needs network allowlist) and set `verified: true` per route.
+1. Confirm Stena times from Stena itself and the day-of-week patterns; re-run the probe when timetables change.
 2. Measure the fallback drive estimates with Google (needs `GOOGLE_MAPS_KEY` in the environment).
-3. Fare fetching job → `data/fares.json`; return-fare vs two-singles pricing; cabin costs on overnight sailings.
+3. Per-sailing fares: investigate AFerry's timetable micro-frontend data, then a scheduled job → `data/fares.json`; return-fare vs two-singles pricing; cabin costs on overnight sailings.
 4. Booking links go to operator home pages; deep links with dates are unverified.
 5. Verify whether Dublin Swift runs in 2026 and its times; add Stena fast craft if any.
 6. Without a Google key, Fastest cannot see traffic and several options tie.

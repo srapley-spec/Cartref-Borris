@@ -1,7 +1,7 @@
 {
   "asOf": "2026-11-03",
   "verified": false,
-  "verificationNote": "Not yet checked against the operators' own timetables: stenaline.co.uk and irishferries.com were blocked from the build session. Times come from web-search snippets of operator update pages and ferry aggregators (sources per route). Confirm on the operator's site before booking.",
+  "verificationNote": "Checked 3 Nov 2026 from GitHub's runner (tools/probe-sources.mjs): Irish Ferries routes against Irish Ferries' own sailing-updates status tables; all routes against AFerry's per-date departure lists for Tue 3 Nov. Stena's own pages do not expose times in HTML, so Stena times are confirmed via AFerry only. Day-of-week patterns (Pembroke 02:45, Rosslare 20:45) come from Direct Ferries and are not yet confirmed. Fast ferry not verified.",
   "places": {
     "home": {
       "label": "Home, Letchworth",
@@ -73,6 +73,7 @@
       "to": "DUB",
       "checkInMin": 60,
       "sources": [
+        "https://www.aferry.com/en-gb/holyhead-dublin/",
         "https://www.farminglife.com/country-and-farming/stena-line-has-confirmed-that-ferry-services-from-holyhead-have-resumed-4946118",
         "https://www.ferriesonline.com/stena-line/dublin-holyhead"
       ],
@@ -93,7 +94,18 @@
           "dep": "22:15",
           "durMin": 210
         }
-      ]
+      ],
+      "verified": {
+        "by": "aggregator",
+        "on": "2026-11-03",
+        "url": "https://www.aferry.com/en-gb/holyhead-dublin/"
+      },
+      "typicalFare": {
+        "amount": 174,
+        "currency": "GBP",
+        "source": "AFerry average, car single",
+        "on": "2026-11-03"
+      }
     },
     {
       "id": "stena-DUB-HHD",
@@ -102,27 +114,39 @@
       "to": "HHD",
       "checkInMin": 60,
       "sources": [
+        "https://www.aferry.com/en-gb/dublin-holyhead/",
         "https://www.farminglife.com/country-and-farming/stena-line-has-confirmed-that-ferry-services-from-holyhead-have-resumed-4946118",
         "https://www.ferriesonline.com/stena-line/dublin-holyhead"
       ],
       "sailings": [
         {
           "dep": "04:30",
-          "durMin": 215
+          "durMin": 210
         },
         {
           "dep": "10:15",
-          "durMin": 215
+          "durMin": 210
         },
         {
           "dep": "16:30",
-          "durMin": 215
+          "durMin": 210
         },
         {
           "dep": "22:30",
-          "durMin": 215
+          "durMin": 210
         }
-      ]
+      ],
+      "verified": {
+        "by": "aggregator",
+        "on": "2026-11-03",
+        "url": "https://www.aferry.com/en-gb/dublin-holyhead/"
+      },
+      "typicalFare": {
+        "amount": 176,
+        "currency": "GBP",
+        "source": "AFerry average, car single",
+        "on": "2026-11-03"
+      }
     },
     {
       "id": "irish-HHD-DUB",
@@ -150,7 +174,18 @@
           "dep": "19:30",
           "durMin": 210
         }
-      ]
+      ],
+      "verified": {
+        "by": "operator",
+        "on": "2026-11-03",
+        "url": "https://www.irishferries.com/uk-en/sailing-updates/dublin-holyhead"
+      },
+      "typicalFare": {
+        "amount": 163,
+        "currency": "GBP",
+        "source": "AFerry average, car single",
+        "on": "2026-11-03"
+      }
     },
     {
       "id": "irish-DUB-HHD",
@@ -162,25 +197,35 @@
         "https://www.irishferries.com/uk-en/sailing-updates/dublin-holyhead",
         "https://www.aferry.com/en-gb/dublin-holyhead/"
       ],
-      "sourceNote": "Only the 02:00 (operator update page) and 19:45 (aggregator) are evidenced; 08:05 and 14:30 are from memory.",
       "sailings": [
         {
-          "dep": "02:00",
+          "dep": "01:15",
           "durMin": 210
         },
         {
-          "dep": "08:05",
+          "dep": "07:30",
           "durMin": 210
         },
         {
-          "dep": "14:30",
+          "dep": "13:45",
           "durMin": 210
         },
         {
           "dep": "19:45",
           "durMin": 210
         }
-      ]
+      ],
+      "verified": {
+        "by": "operator",
+        "on": "2026-11-03",
+        "url": "https://www.irishferries.com/uk-en/sailing-updates/dublin-holyhead"
+      },
+      "typicalFare": {
+        "amount": 143,
+        "currency": "GBP",
+        "source": "AFerry average, car single",
+        "on": "2026-11-03"
+      }
     },
     {
       "id": "stena-FGD-RSL",
@@ -189,6 +234,7 @@
       "to": "RSL",
       "checkInMin": 60,
       "sources": [
+        "https://www.aferry.com/en-gb/fishguard-rosslare/",
         "https://www.directferries.com/fishguard_rosslare_ferry.htm"
       ],
       "sailings": [
@@ -200,7 +246,18 @@
           "dep": "14:00",
           "durMin": 210
         }
-      ]
+      ],
+      "verified": {
+        "by": "aggregator",
+        "on": "2026-11-03",
+        "url": "https://www.aferry.com/en-gb/fishguard-rosslare/"
+      },
+      "typicalFare": {
+        "amount": 176,
+        "currency": "GBP",
+        "source": "AFerry average, car single",
+        "on": "2026-11-03"
+      }
     },
     {
       "id": "stena-RSL-FGD",
@@ -209,6 +266,7 @@
       "to": "FGD",
       "checkInMin": 60,
       "sources": [
+        "https://www.aferry.com/en-gb/rosslare-fishguard/",
         "https://www.directferries.com.au/rosslare_fishguard_ferry.htm"
       ],
       "sailings": [
@@ -220,7 +278,18 @@
           "dep": "19:30",
           "durMin": 210
         }
-      ]
+      ],
+      "verified": {
+        "by": "aggregator",
+        "on": "2026-11-03",
+        "url": "https://www.aferry.com/en-gb/rosslare-fishguard/"
+      },
+      "typicalFare": {
+        "amount": 200,
+        "currency": "GBP",
+        "source": "AFerry average, car single",
+        "on": "2026-11-03"
+      }
     },
     {
       "id": "irish-PEM-RSL",
@@ -229,6 +298,7 @@
       "to": "RSL",
       "checkInMin": 30,
       "sources": [
+        "https://www.irishferries.com/uk-en/sailing-updates/rosslare-pembroke/",
         "https://www.directferries.com/pembroke_rosslare_ferry.htm"
       ],
       "sailings": [
@@ -247,7 +317,18 @@
           "dep": "14:45",
           "durMin": 241
         }
-      ]
+      ],
+      "verified": {
+        "by": "operator",
+        "on": "2026-11-03",
+        "url": "https://www.irishferries.com/uk-en/sailing-updates/rosslare-pembroke/"
+      },
+      "typicalFare": {
+        "amount": 171,
+        "currency": "GBP",
+        "source": "AFerry average, car single",
+        "on": "2026-11-03"
+      }
     },
     {
       "id": "irish-RSL-PEM",
@@ -256,6 +337,7 @@
       "to": "PEM",
       "checkInMin": 30,
       "sources": [
+        "https://www.irishferries.com/uk-en/sailing-updates/rosslare-pembroke/",
         "https://www.directferries.com/rosslare_pembroke_ferry.htm"
       ],
       "sailings": [
@@ -275,7 +357,18 @@
             6
           ]
         }
-      ]
+      ],
+      "verified": {
+        "by": "operator",
+        "on": "2026-11-03",
+        "url": "https://www.irishferries.com/uk-en/sailing-updates/rosslare-pembroke/"
+      },
+      "typicalFare": {
+        "amount": 169,
+        "currency": "GBP",
+        "source": "AFerry average, car single",
+        "on": "2026-11-03"
+      }
     },
     {
       "id": "irish-HHD-DUB-swift",
@@ -337,5 +430,6 @@
       "route": "Cairnryan–Belfast/Larne",
       "reason": "Northern Ireland routes add ~3h of Irish driving to Borris and a much longer UK drive; not competitive."
     }
-  ]
+  ],
+  "bannerNote": "Ferry times checked 3 Nov 2026: Irish Ferries from its own pages, Stena via AFerry. Fast-ferry times unverified. Confirm before booking."
 }

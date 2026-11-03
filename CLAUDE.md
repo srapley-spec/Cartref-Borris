@@ -19,8 +19,9 @@ until they are updated; say so.
 ## Principles
 - **Never hide an option.** Filters apply only on Sam's explicit choice (Day/Night). Unpriced options stay in the
   cost ranking, after the priced ones, flagged "no price yet".
-- **Never present unverified data as fact.** `data/sailings.json` has `verified: false` until each route has been
-  checked against the operator's own timetable; the page shows a banner while it is false. Drive times from the
+- **Never present unverified data as fact.** Each route in `data/sailings.json` records how its times were checked
+  (`verified.by`: operator or aggregator, and when); the page shows that per option. Re-check with the manual
+  "Probe ferry sources" workflow (`tools/probe-sources.mjs`); this session's network can't reach the ferry sites. Drive times from the
   fallback estimates are marked `*`. Fares are only ever ones Sam entered or ones actually fetched, never guessed.
 - **Answer the real questions:** when to leave home, which crossing, when you arrive, what it costs.
 - `src/core` is pure: no DOM, network or clock reads; data and drive times are injected.

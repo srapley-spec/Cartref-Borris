@@ -17,7 +17,8 @@ test("door-to-door timing: leave = dep − check-in − margin − drive; arrive
   assert.equal(o.arrive, T("2026-11-20", "20:26"));      // 18:46 + 20 + 80
   assert.equal(o.totalMin, 11 * 60 + 21);
   assert.equal(o.overnight, false);
-  assert.deepEqual(o.flags, ["timetable unverified", "drive time estimated", "no price yet"]);
+  assert.deepEqual(o.flags, ["drive time estimated", "no price yet"]); // times checked with Irish Ferries
+  assert.equal(o.verifiedBy, "operator"); assert.equal(o.typicalFare.amount, 171);
 });
 
 test("leaving date means leaving the house: an early-hours sailing next day belongs to the evening before", () => {
@@ -204,4 +205,20 @@ test("countdown wording", () => {
   assert.equal(countdown(7), "leave in 7 min");
   assert.equal(countdown(1440 + 61), "leave in 1 day 1h 01m");
   assert.equal(countdown(-5), "leave time passed 5 min ago");
+});
+
+test("timetable provenance flags: aggregator-only times, unconfirmed day patterns, unverified fast ferry", () => {
+  const fri = options(data, { dir: "out", date: "2026-11-20", drive: est, settings });
+  const stena = fri.find(o => o.id === "stena-HHD-DUB|2026-11-20|16:00");
+  assert.equal(stena.verifiedBy, "aggregator"); assert.ok(stena.flags.includes("times via AFerry, not the operator"));
+  const pem245 = fri.find(o => o.id === "irish-PEM-RSL|2026-11-21|02:45");
+  assert.ok(pem245.flags.includes("days of operation not confirmed"));
+  const swift = options(data, { dir: "out", date: "2026-06-12", drive: est, settings: { ...settings, fastFerry: true } }).find(o => o.fast);
+  assert.equal(swift.verified, false); assert.ok(swift.flags.includes("timetable unverified"));
+});
+
+test("Irish Ferries Dublin→Holyhead matches its own status page (3 Nov 2026): 01:15, 07:30, 13:45, 19:45, 3h30", () => {
+  const r = data.routes.find(x => x.id === "irish-DUB-HHD");
+  assert.deepEqual(r.sailings.map(s => s.dep), ["01:15", "07:30", "13:45", "19:45"]);
+  assert.ok(r.sailings.every(s => s.durMin === 210));
 });

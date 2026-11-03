@@ -23,9 +23,10 @@ the drives either side and the price, is hard to do by hand.
    → "Google drive time replaces the estimate…", page "with a Google key…", "Google failure is reported…"
 7. Round-trip summary: fastest pair, cheapest fully priced pair (two singles).
    → "round-trip summary…"
-8. While the timetable is unverified a banner says so and every option carries "timetable unverified".
-   → "door-to-door timing…", page "shows outbound and return options…"
+8. Every option says where its times came from: checked with the operator, via AFerry, or unverified (fast ferry);
+   unconfirmed day patterns are flagged; the banner summarises. Typical fares (AFerry averages) are shown but never
+   ranked on. → "timetable provenance flags…", "Irish Ferries Dublin→Holyhead matches…", page "Leave now (default)…"
 
 ## Status
-Built 3 Nov 2026. Timetable and drive estimates **unverified**; live fares not yet fetched (see architecture
+Built 3 Nov 2026. Timetable checked 3 Nov (see architecture); drive estimates **unmeasured**; live fares not yet fetched (see architecture
 "Known gaps").

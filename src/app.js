@@ -63,7 +63,7 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   };
   function num(sel, d) { const v = parseInt($(sel).value, 10); return Number.isFinite(v) && v >= 0 ? v : d; }
   function saveSettings() { save(LS.settings, state.settings); refresh(); }
-  $("#banner").textContent = data.verified ? "" : `Ferry times not yet checked with the operators (data as of ${niceDate(data.asOf)}). Confirm before booking.`;
+  $("#banner").textContent = data.verified ? "" : (data.bannerNote || `Ferry times not yet checked with the operators (data as of ${niceDate(data.asOf)}). Confirm before booking.`);
 
   // ---- data plumbing
   const allFares = () => {
@@ -169,6 +169,11 @@ const money = (f) => `£${f.amount.toFixed(f.amount % 1 ? 2 : 0)}`;
 function opBadge(o) {
   return o.logo ? `<span class="op"><img src="${esc(o.logo)}" alt="${esc(o.operator)}" height="28"></span>` : `<span class="op op-text">${esc(o.operator)}</span>`;
 }
+function timesSource(o) {
+  if (!o.verified) return ` · <span class="unverified">Timetable unverified</span>`;
+  const on = o.verifiedOn ? ` ${esc(niceDate(o.verifiedOn))}` : "";
+  return o.verifiedBy === "operator" ? ` · Times checked with ${esc(o.operator)}${on}` : ` · Times via AFerry${on}`;
+}
 function driveText(d) {
   return `${duration(d.min)}${d.stops ? ` incl. ${d.stops} stop${d.stops > 1 ? "s" : ""} (${duration(d.stopsMin)})` : ""}${d.source === "estimate" ? " (estimate)" : ""}`;
 }
@@ -203,11 +208,11 @@ export function card(o, { dir, label, compact }) {
         <div><small>Expected departure</small><span class="legbig muted">Not live</span></div>
         <div><small>At ${esc(o.toPort)}</small><span class="legbig">${t(o.arr)}</span>${dayNote(o.arr, o.dep)}</div>
       </div>
-      <div class="leg-meta">Check-in closes <b>${t(checkInCloses)}</b> · be there by ${t(o.atPortBy)}${o.vessel ? ` · ${esc(o.vessel)}` : ""}${o.verified ? "" : ` · <span class="unverified">Timetable unverified</span>`}</div>
+      <div class="leg-meta">Check-in closes <b>${t(checkInCloses)}</b> · be there by ${t(o.atPortBy)}${o.vessel ? ` · ${esc(o.vessel)}` : ""}${timesSource(o)}</div>
     </div>
     <div class="chips"><span class="chip">Drive ${esc(driveText(o.driveTo))} to ${esc(o.fromPort)}</span><span class="chip">Drive ${esc(driveText(o.driveFrom))} from ${esc(o.toPort)}</span></div>
     <div class="fare">
-      ${o.fare ? `<span class="price">${money(o.fare)}</span><span class="src">${o.fare.source === "entered" ? "you entered" : "fetched"}</span>` : `<span class="src">No price yet</span>`}
+      ${o.fare ? `<span class="price">${money(o.fare)}</span><span class="src">${o.fare.source === "entered" ? "you entered" : "fetched"}</span>` : (o.typicalFare ? `<span class="src">No quote yet · typical £${o.typicalFare.amount} (AFerry average)</span>` : `<span class="src">No price yet</span>`)}
       <label>Fare £ <input class="fare-in" inputmode="decimal" data-id="${esc(o.id)}" value="${o.fare && o.fare.source === "entered" ? o.fare.amount : ""}" placeholder="quote" aria-label="Fare for ${esc(o.operator)} ${t(o.dep)}"></label>
     </div>
     <div class="actions">
