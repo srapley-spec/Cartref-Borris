@@ -1,0 +1,20 @@
+name: Probe ferry sources
+# Manual only. Fetches each operator/aggregator page once from GitHub's runner and logs what is readable.
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "Optional whitespace-separated URLs (default list in tools/probe-sources.mjs)"
+        required: false
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/probe-sources.mjs
+        env:
+          PROBE_URLS: ${{ inputs.urls }}
