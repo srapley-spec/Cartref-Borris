@@ -1,0 +1,12 @@
+{
+  "name": "cartref-borris",
+  "private": true,
+  "type": "module",
+  "description": "Letchworth to Borris (Co. Carlow) by car and ferry: door-to-door options ranked by time and cost.",
+  "scripts": {
+    "test": "TZ=Europe/London node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

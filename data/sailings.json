@@ -1,0 +1,95 @@
+{
+  "asOf": "2026-11-03",
+  "verified": false,
+  "verificationNote": "Not yet checked against the operators' own timetables: stenaline.co.uk and irishferries.com were blocked from the build session. Times come from web-search snippets of operator update pages and ferry aggregators (sources per route). Confirm on the operator's site before booking.",
+  "places": {
+    "home": { "label": "Home, Letchworth", "address": "20 Hitchin Road, Letchworth Garden City SG6 3LT, UK" },
+    "dest": { "label": "Borris, Co. Carlow", "address": "Borris, County Carlow, Ireland" }
+  },
+  "ports": {
+    "HHD": { "name": "Holyhead", "country": "UK", "address": "Holyhead Port, Holyhead LL65 1DQ, UK" },
+    "FGD": { "name": "Fishguard", "country": "UK", "address": "Fishguard Harbour, Goodwick SA64 0BU, UK" },
+    "PEM": { "name": "Pembroke Dock", "country": "UK", "address": "Pembroke Dock Ferry Terminal, Pembroke Dock SA72 6TD, UK" },
+    "DUB": { "name": "Dublin Port", "country": "IE", "address": "Dublin Port Terminal 2, Dublin, Ireland" },
+    "RSL": { "name": "Rosslare Europort", "country": "IE", "address": "Rosslare Europort, Rosslare Harbour, Co. Wexford, Ireland" }
+  },
+  "driveEstimatesMin": {
+    "_note": "Fallback only, used when Google is unavailable. Rough, unmeasured estimates (no traffic). Replace with measured values once the Google key is in the build environment.",
+    "home>HHD": 285, "HHD>home": 285,
+    "home>FGD": 300, "FGD>home": 300,
+    "home>PEM": 295, "PEM>home": 295,
+    "DUB>dest": 100, "dest>DUB": 100,
+    "RSL>dest": 80,  "dest>RSL": 80
+  },
+  "operators": {
+    "stena": { "name": "Stena Line", "bookingUrl": "https://www.stenaline.co.uk/" },
+    "irish": { "name": "Irish Ferries", "bookingUrl": "https://www.irishferries.com/uk-en/" }
+  },
+  "routes": [
+    {
+      "id": "stena-HHD-DUB", "operator": "stena", "from": "HHD", "to": "DUB", "checkInMin": 60,
+      "sources": ["https://www.farminglife.com/country-and-farming/stena-line-has-confirmed-that-ferry-services-from-holyhead-have-resumed-4946118", "https://www.ferriesonline.com/stena-line/dublin-holyhead"],
+      "sailings": [
+        { "dep": "04:00", "durMin": 210 }, { "dep": "10:00", "durMin": 210 },
+        { "dep": "16:00", "durMin": 210 }, { "dep": "22:15", "durMin": 210 }
+      ]
+    },
+    {
+      "id": "stena-DUB-HHD", "operator": "stena", "from": "DUB", "to": "HHD", "checkInMin": 60,
+      "sources": ["https://www.farminglife.com/country-and-farming/stena-line-has-confirmed-that-ferry-services-from-holyhead-have-resumed-4946118", "https://www.ferriesonline.com/stena-line/dublin-holyhead"],
+      "sailings": [
+        { "dep": "04:30", "durMin": 215 }, { "dep": "10:15", "durMin": 215 },
+        { "dep": "16:30", "durMin": 215 }, { "dep": "22:30", "durMin": 215 }
+      ]
+    },
+    {
+      "id": "irish-HHD-DUB", "operator": "irish", "from": "HHD", "to": "DUB", "checkInMin": 30,
+      "sources": ["https://www.irishferries.com/uk-en/sailing-updates/dublin-holyhead"],
+      "sailings": [
+        { "dep": "01:30", "durMin": 210 }, { "dep": "07:30", "durMin": 210 },
+        { "dep": "13:15", "durMin": 210 }, { "dep": "19:30", "durMin": 210 }
+      ]
+    },
+    {
+      "id": "irish-DUB-HHD", "operator": "irish", "from": "DUB", "to": "HHD", "checkInMin": 30,
+      "sources": ["https://www.irishferries.com/uk-en/sailing-updates/dublin-holyhead", "https://www.aferry.com/en-gb/dublin-holyhead/"],
+      "sourceNote": "Only the 02:00 (operator update page) and 19:45 (aggregator) are evidenced; 08:05 and 14:30 are from memory.",
+      "sailings": [
+        { "dep": "02:00", "durMin": 210 }, { "dep": "08:05", "durMin": 210 },
+        { "dep": "14:30", "durMin": 210 }, { "dep": "19:45", "durMin": 210 }
+      ]
+    },
+    {
+      "id": "stena-FGD-RSL", "operator": "stena", "from": "FGD", "to": "RSL", "checkInMin": 60,
+      "sources": ["https://www.directferries.com/fishguard_rosslare_ferry.htm"],
+      "sailings": [
+        { "dep": "01:30", "durMin": 240 }, { "dep": "14:00", "durMin": 210 }
+      ]
+    },
+    {
+      "id": "stena-RSL-FGD", "operator": "stena", "from": "RSL", "to": "FGD", "checkInMin": 60,
+      "sources": ["https://www.directferries.com.au/rosslare_fishguard_ferry.htm"],
+      "sailings": [
+        { "dep": "08:15", "durMin": 210 }, { "dep": "19:30", "durMin": 210 }
+      ]
+    },
+    {
+      "id": "irish-PEM-RSL", "operator": "irish", "from": "PEM", "to": "RSL", "checkInMin": 30,
+      "sources": ["https://www.directferries.com/pembroke_rosslare_ferry.htm"],
+      "sailings": [
+        { "dep": "02:45", "durMin": 241, "days": [0, 2, 3, 5, 6] }, { "dep": "14:45", "durMin": 241 }
+      ]
+    },
+    {
+      "id": "irish-RSL-PEM", "operator": "irish", "from": "RSL", "to": "PEM", "checkInMin": 30,
+      "sources": ["https://www.directferries.com/rosslare_pembroke_ferry.htm"],
+      "sailings": [
+        { "dep": "08:45", "durMin": 241 }, { "dep": "20:45", "durMin": 241, "days": [1, 2, 3, 4, 5, 6] }
+      ]
+    }
+  ],
+  "excluded": [
+    { "route": "Liverpool–Dublin (P&O)", "reason": "Conflicting evidence: Freightlink reports P&O ended the route on 21 Dec 2023; aggregators still list it. Left out until verified." },
+    { "route": "Cairnryan–Belfast/Larne", "reason": "Northern Ireland routes add ~3h of Irish driving to Borris and a much longer UK drive; not competitive." }
+  ]
+}
