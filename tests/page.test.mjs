@@ -65,7 +65,8 @@ test("Leave now (default): Signal card with Leave by → At Borris, Total journe
   assert.match(text, /Arrives first/);
   assert.match(text, /Next: 19:30 Irish Ferries from Holyhead/);
   assert.match(text, /Timetable departure\s*19:30/); assert.match(text, /Expected departure\s*Not live/); assert.match(text, /At Dublin Port\s*23:00/);
-  assert.equal(await best.locator(".op").textContent(), "IFIrish Ferries");
+  assert.equal(await best.locator(".op img").getAttribute("alt"), "Irish Ferries");
+  assert.ok(await best.locator(".op img").evaluate(i => i.complete && i.naturalWidth > 0), "logo loads");
   assert.match(await page.textContent("#hero .next-best"), /Next best[\s\S]*Leave by/);
   assert.match(await page.textContent("#banner"), /not yet checked/);
   assert.match(await page.textContent("#status"), /No Google key/);

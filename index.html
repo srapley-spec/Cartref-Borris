@@ -13,14 +13,12 @@ html {
   --accent:#1453b6; --accent-ink:#ffffff; --signal-soft:#e8f0fd; --signal-inset:#edf2f7;
   --signal-control-line:#8191a5; --signal-shadow:0 2px 9px #10213606;
   --note:#746000; --note-bg:#fff7d2;
-  --stena:#0c3c7c; --irish:#00704a;
-}
+  }
 @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) {
   color-scheme:dark;
   --paper:#090f16; --card:#121c28; --ink:#f0f5fc; --muted:#aabbd0; --line:#2c3b4e;
   --accent:#9bc3ff; --accent-ink:#0a1525; --signal-soft:#182d48; --signal-inset:#182433;
   --signal-control-line:#71869f; --signal-shadow:none; --note:#efdd88; --note-bg:#363219;
-  --stena:#2b63b8; --irish:#14895e;
 } }
 * { box-sizing:border-box; }
 [hidden] { display:none !important; }
@@ -75,10 +73,8 @@ button { font:inherit; min-width:44px; min-height:44px; touch-action:manipulatio
 .legbig.muted { font-size:16px; font-weight:600; color:var(--muted); padding-top:8px; }
 .leg-meta { font-size:14px; color:var(--muted); } .leg-meta b { color:var(--ink); }
 .unverified { color:var(--note); background:var(--note-bg); padding:0 5px; border-radius:4px; font-size:12px; font-weight:600; }
-.op { display:inline-flex; align-items:center; gap:6px; padding:2px 8px 2px 3px; border-radius:7px; color:#fff; font-size:13px; font-weight:700; }
-.op-stena { background:var(--stena); } .op-irish { background:var(--irish); }
-.op-mark { display:inline-grid; place-items:center; min-width:22px; height:22px; padding:0 3px; border-radius:5px; background:#fff; font-size:11px; font-weight:850; letter-spacing:-.03em; }
-.op-stena .op-mark { color:var(--stena); } .op-irish .op-mark { color:var(--irish); }
+.op { display:inline-flex; align-items:center; padding:3px 6px; border-radius:7px; background:#fff; box-shadow:0 0 0 1px var(--line); }
+.op img { display:block; height:28px; width:auto; } .op-text { color:#142436; font-size:13px; font-weight:700; }
 .chips { display:flex; flex-wrap:wrap; gap:6px; }
 .chip { font-size:13px; font-weight:600; padding:4px 8px; border-radius:7px; border:1px solid var(--line); background:var(--card); }
 .fare { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; font-size:14px; }
@@ -94,7 +90,7 @@ button { font:inherit; min-width:44px; min-height:44px; touch-action:manipulatio
 h2 { font-size:16px; margin:12px 0 0; color:var(--muted); }
 #list { display:grid; gap:8px; }
 .compact { gap:6px; } .compact :is(.next-svc,.chips,.journey-countdown,.leg-head > span:not(.op)) { display:none; } .compact .leg-panel { padding:8px 10px; }
-.compact .optbig { font-size:28px; } .compact .optbig.arrive { font-size:28px; } .compact .legbig { font-size:24px; }
+.compact .optbig { font-size:28px; } .compact .optbig.arrive { font-size:28px; } .compact .legbig { font-size:24px; } .compact .legbig.muted { font-size:14px; padding-top:6px; }
 #roundTrip { display:grid; gap:6px; font-size:14px; } #roundTrip small { color:var(--muted); font-weight:650; }
 .empty { color:var(--muted); margin:0; }
 #settings { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px 12px; margin-top:12px; }
@@ -128,7 +124,7 @@ h2 { font-size:16px; margin:12px 0 0; color:var(--muted); }
   <h2 id="listTitle" hidden></h2>
   <section id="list"></section>
   <section id="roundTrip"></section>
-  <p class="foot">Overnight = any part of the journey, door to door, between 00:00 and 05:00. Fares are singles for a car and 2 adults: enter the quote you see to rank by cost. Ferry company names are shown in brand-coloured badges, not official logos.</p>
+  <p class="foot">Overnight = any part of the journey, door to door, between 00:00 and 05:00. Fares are singles for a car and 2 adults: enter the quote you see to rank by cost.</p>
   <details id="settings">
     <summary>Settings</summary>
     <div style="display:grid;gap:8px">

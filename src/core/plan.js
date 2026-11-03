@@ -106,6 +106,7 @@ export function options(data, { dir, date, dates, drive, fares = {}, settings })
       operatorKey: r.operator,
       operator: data.operators[r.operator].name,
       bookingUrl: data.operators[r.operator].bookingUrl,
+      logo: data.operators[r.operator].logo || null,
       fromKey: r.from, toKey: r.to,
       fromPort: data.ports[r.from].name,
       toPort: data.ports[r.to].name,

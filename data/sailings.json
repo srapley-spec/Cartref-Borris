@@ -56,22 +56,14 @@
     "stena": {
       "name": "Stena Line",
       "bookingUrl": "https://www.stenaline.co.uk/",
-      "brand": {
-        "bg": "#0c3c7c",
-        "fg": "#ffffff",
-        "mark": "S"
-      }
+      "logo": "assets/stena-line.png"
     },
     "irish": {
       "name": "Irish Ferries",
       "bookingUrl": "https://www.irishferries.com/uk-en/",
-      "brand": {
-        "bg": "#00704a",
-        "fg": "#ffffff",
-        "mark": "IF"
-      }
+      "logo": "assets/irish-ferries.png"
     },
-    "_note": "brand colours are identity, approximated by hand (logo files could not be fetched); the name is always shown inside the badge"
+    "_note": "logos supplied by Sam (3 Nov 2026), cropped; shown on a white chip so they read in dark mode"
   },
   "routes": [
     {

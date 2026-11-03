@@ -48,7 +48,7 @@ For a sailing departing `dep` with crossing `durMin` and operator check-in `chec
   night is out by an hour for journeys spanning 01:00–02:00. Accepted.
 
 - **3 Nov 2026** UI copies Cartref Commute's Signal design (Sam). The ferry panel keeps Signal's fixed three columns;
-  "Expected departure" says "Not live" because no live ferry feed exists. Brand badges stand in for logos.
+  "Expected departure" says "Not live" because no live ferry feed exists. Operator logos supplied by Sam (`assets/`).
 - **3 Nov 2026** Fast ferry modelled as Dublin Swift only, seasonal, off by default; times from memory (low confidence).
 - **3 Nov 2026** A Google key was pasted into chat. It was not used or stored (project rule); Sam asked to regenerate it.
 

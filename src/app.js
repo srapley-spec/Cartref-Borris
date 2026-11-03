@@ -167,7 +167,7 @@ const dayNote = (m, ref) => (fmt(m).date !== fmt(ref).date ? `<small class="nd">
 const money = (f) => `£${f.amount.toFixed(f.amount % 1 ? 2 : 0)}`;
 
 function opBadge(o) {
-  return `<span class="op op-${esc(o.operatorKey)}" aria-label="${esc(o.operator)}"><span class="op-mark" aria-hidden="true">${o.operatorKey === "stena" ? "S" : "IF"}</span>${esc(o.operator)}</span>`;
+  return o.logo ? `<span class="op"><img src="${esc(o.logo)}" alt="${esc(o.operator)}" height="28"></span>` : `<span class="op op-text">${esc(o.operator)}</span>`;
 }
 function driveText(d) {
   return `${duration(d.min)}${d.stops ? ` incl. ${d.stops} stop${d.stops > 1 ? "s" : ""} (${duration(d.stopsMin)})` : ""}${d.source === "estimate" ? " (estimate)" : ""}`;

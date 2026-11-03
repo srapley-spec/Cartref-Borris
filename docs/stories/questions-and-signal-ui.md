@@ -29,7 +29,8 @@ be? … when's the absolute fastest journey time … toggle the fast ferry … c
    Dublin Swift is modelled, seasonal 27 Mar–30 Sep, times **from memory (low confidence)**.
    → "fast ferry: off by default…", page "Stops move the leave time…; fast ferry toggle…"
 9. Google is not asked for legs already in the past (options nobody can take). → page "with a Google key…"
-10. Ferry companies appear as brand-coloured name badges, not official logos (logo files could not be fetched).
+10. Each ferry panel shows the operator's logo (supplied by Sam, `assets/`) on a white chip, with the operator name as
+    its accessible text. → page "Leave now (default)…"
 
 ## Status
 Built 3 Nov 2026. Not independently reviewed. Data caveats as in `door-to-door-options.md`.
