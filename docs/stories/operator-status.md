@@ -74,4 +74,6 @@ time; in the 4 Nov fixtures neither did. The operators' terms for automated read
 collector identifies itself and makes six requests per run.
 
 ## Status
-Built 4 Nov 2026 (branch `operator-status`). First live collection: see architecture decisions log once run.
+Built 4 Nov 2026. First live collection from GitHub's runner at 10:32 UTC the same day: all six sources ok, 72 dated
+records, coverage for 24 route-days, one `unscheduled` (Thu 5 Nov 02:45 Pembroke → Rosslare, which the weekday pattern
+omits). Verified from the deployment runtime, not only from a browser.
