@@ -148,7 +148,7 @@ test("fast ferry: off by default, included only when on and in season", () => {
   assert.equal(on.length, 1); assert.equal(on[0].durMin, 135);
   assert.equal(sailingsOn(data, "out", ["2026-11-20"], { fastFerry: true }).filter(s => s.fast).length, 0, "out of season in November");
   const o = options(data, { dir: "out", date: "2026-06-12", drive: est, settings: { ...settings, fastFerry: true } }).find(x => x.fast);
-  assert.ok(o.flags.includes("Dublin Swift times and season from memory, not seen on any timetable (4 Nov 2026)"));
+  assert.ok(o.flags.includes("Dublin Swift: 2h15 crossing confirmed (Sam's screenshot citing RTÉ, 4 Nov); departure times and season from memory, not seen on any timetable"));
   assert.ok(o.flags.includes("timetable unverified"), "a route checked with the operator does not vouch for the remembered Swift sailing");
 });
 
