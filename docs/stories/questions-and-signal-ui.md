@@ -25,9 +25,12 @@ be? … when's the absolute fastest journey time … toggle the fast ferry … c
    "Day/Overnight partition…"
 7. **Stops:** count (0–6, default 1) × minutes per stop (Settings, default 30) added to the UK drive only.
    → "stops add minutes to the UK drive only…", page "Stops move the leave time…"
-8. **Fast ferry:** off by default; when on, fast sailings in season are included and labelled. Only Irish Ferries'
-   Dublin Swift is modelled, seasonal 27 Mar–30 Sep, times **from memory (low confidence)**.
-   → "fast ferry: off by default…", page "Stops move the leave time…; fast ferry toggle…"
+8. **Fast ferry:** off by default; when on, sailings run by a fast ship (Dublin Swift) are included and labelled. Fast
+   is identified by the ship, not by a separate route. The Dublin Swift has not been seen on any timetable (4 Nov:
+   Irish Ferries status pages show only Ulysses/James Joyce; no source gives 2026 Swift times; sources disagree
+   on whether it still sails). Its 14:30/08:45 sailings stay as remembered, seasonal (27 Mar–30 Sep), flagged
+   unverified, and the switch shows whether the daily job has seen it. → "fast ferry: off by default…",
+   "fast ferry is identified by the ship…", page "Ship sightings…"
 9. Google is not asked for legs already in the past (options nobody can take). → page "with a Google key…"
 10. Each ferry panel shows the operator's logo (supplied by Sam, `assets/`) on a white chip, with the operator name as
     its accessible text. → page "Leave now (default)…"

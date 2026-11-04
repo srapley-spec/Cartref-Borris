@@ -68,7 +68,7 @@ export function inSeason(season, dateISO) {
 }
 
 /** All concrete sailings in a direction departing on the given dates. dir: "out" (UK->IE) | "back". */
-export function sailingsOn(data, dir, dates, { fastFerry = false } = {}) {
+export function sailingsOn(data, dir, dates, { fastFerry = false } = {}, ships = null) {
   const out = [];
   for (const route of data.routes) {
     const ukFirst = data.ports[route.from].country === "UK";
@@ -76,12 +76,15 @@ export function sailingsOn(data, dir, dates, { fastFerry = false } = {}) {
     for (const date of dates) {
       const base = dayStart(date), dow = fmt(base).dow;
       for (const s of route.sailings) {
-        const fast = !!(s.fast ?? route.fast);
+        // Fast ferry is identified by the ship on the timetable (Sam, 4 Nov: "the fast boat is called the Dublin Swift").
+        // Ship actually seen on the operator's status page for this sailing time beats the stored name.
+        const vessel = (ships && ships[`${route.id}|${s.dep}`]?.ship) || s.vessel || null;
+        const fast = (data.fastShips || []).includes(vessel);
         if (fast && !fastFerry) continue;
         if (s.days && !s.days.includes(dow)) continue;
         if (!inSeason(s.season ?? route.season, date)) continue;
         const dep = base + hhmm(s.dep);
-        out.push({ id: `${route.id}|${date}|${s.dep}`, route, sailing: s, fast, dep, arr: dep + s.durMin, durMin: s.durMin });
+        out.push({ id: `${route.id}|${date}|${s.dep}`, route, sailing: s, vessel, fast, dep, arr: dep + s.durMin, durMin: s.durMin });
       }
     }
   }
@@ -96,14 +99,14 @@ export function sailingsOn(data, dir, dates, { fastFerry = false } = {}) {
  * typical(routeKey "PEM-RSL", operatorKey, sailDateISO) -> { amount, basis } | null: injected average price (shown,
  * and used only to order options that have no quote; never presented as a quote).
  */
-export function options(data, { dir, date, dates, drive, fares = {}, typical = null, settings }) {
+export function options(data, { dir, date, dates, drive, fares = {}, typical = null, ships = null, settings }) {
   const leaveDates = dates || [date];
   const start = dir === "out" ? "home" : "dest", end = dir === "out" ? "dest" : "home";
   const stopTotal = (settings.stops || 0) * (settings.stopMin || 0);
   const sailDates = [...new Set(leaveDates.flatMap(d => [d, addDays(d, 1)]))];
   const days = leaveDates.map(dayStart);
   const result = [];
-  for (const s of sailingsOn(data, dir, sailDates, settings)) {
+  for (const s of sailingsOn(data, dir, sailDates, settings, ships)) {
     const r = s.route;
     const ukLeg = dir === "out" ? "to" : "from";
     const atPortBy = s.dep - r.checkInMin - settings.marginMin;
@@ -133,7 +136,8 @@ export function options(data, { dir, date, dates, drive, fares = {}, typical = n
       fromKey: r.from, toKey: r.to,
       fromPort: data.ports[r.from].name,
       toPort: data.ports[r.to].name,
-      vessel: s.sailing.vessel || null,
+      vessel: s.vessel,
+      vesselSeen: !!(ships && ships[`${r.id}|${s.sailing.dep}`]),
       fast: s.fast,
       shipType: s.fast ? "Fast ferry" : "Standard ferry",
       leave, atPortBy, dep: s.dep, arr: s.arr, offAt, arrive,
@@ -147,12 +151,12 @@ export function options(data, { dir, date, dates, drive, fares = {}, typical = n
       nightDriveMin: overlapDaily(leave, atPortBy, OVERNIGHT_WINDOW.start, OVERNIGHT_WINDOW.end)
         + overlapDaily(offAt, arrive, OVERNIGHT_WINDOW.start, OVERNIGHT_WINDOW.end),
       fare,
-      verified: !!(data.verified || r.verified),
+      verified: !!(data.verified || r.verified) && !s.sailing.unverified,
       verifiedBy: r.verified ? r.verified.by : null,
       verifiedOn: r.verified ? r.verified.on : null,
       typicalFare: (typical && typical(`${r.from}-${r.to}`, r.operator, fmt(s.dep).date)) || r.typicalFare || null,
       flags: [
-        ...(data.verified || r.verified ? [] : ["timetable unverified"]),
+        ...((data.verified || r.verified) && !s.sailing.unverified ? [] : ["timetable unverified"]),
         ...(r.verified && r.verified.by === "aggregator" ? ["times via AFerry, not the operator"] : []),
         ...(s.sailing.days ? ["days of operation not confirmed"] : []),
         ...(s.sailing.sourceNote ? [s.sailing.sourceNote] : []),
@@ -208,9 +212,9 @@ const byLatestLeave = (a, b) => b.leave - a.leave || a.arrive - b.arrive || a.id
  * sort "cost" re-ranks the eligible set by price (priced first); nothing eligible is dropped.
  * Returns { list, best, next, label, leastLate, window }.
  */
-export function answer(data, { question, dir, nowMin, date, time, pref = "any", sort = "time", drive, fares, typical, settings }) {
+export function answer(data, { question, dir, nowMin, date, time, pref = "any", sort = "time", drive, fares, typical, ships, settings }) {
   let list, label, leastLate = false, window = null;
-  const make = (dates) => byPreference(options(data, { dir, dates, drive, fares, typical, settings }), pref);
+  const make = (dates) => byPreference(options(data, { dir, dates, drive, fares, typical, ships, settings }), pref);
   if (question === "now") {
     const today = fmt(nowMin).date;
     list = make([today, addDays(today, 1)]).filter(o => o.leave >= nowMin).sort(byArrival);

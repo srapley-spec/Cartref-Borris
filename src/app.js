@@ -13,6 +13,9 @@ const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;
 
 export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   const data = await (await fetchFn("data/sailings.json")).json();
+  let shipData = { sailings: {}, fastShipsSeen: {} };
+  try { const r = await fetchFn("data/ships.json"); if (r.ok) shipData = { sailings: {}, fastShipsSeen: {}, ...(await r.json()) }; } catch { /* none yet */ }
+  const ships = shipData.sailings;
   let fareData = { quotes: {}, routes: {} };
   try { const r = await fetchFn("data/fares.json"); if (r.ok) fareData = { quotes: {}, routes: {}, ...(await r.json()) }; } catch { /* none yet */ }
   // Typical price for a sailing: AFerry's 12-month average for that route and month, else its operator average.
@@ -44,6 +47,7 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
     $("#stopsVal").textContent = state.settings.stops;
     $("#fastFerry").setAttribute("aria-pressed", String(state.settings.fastFerry));
     $("#fastFerry").textContent = state.settings.fastFerry ? "Fast ferry: on" : "Fast ferry: off";
+    $("#fastNote").textContent = fastNote(data, shipData);
     const date = form.dir === "out" ? form.out : form.back;
     $("#contextSummary").textContent = [form.question === "now" ? "Today" : niceDate(date || form.out),
       { any: "Day or night", day: "Day only", overnight: "Overnight only" }[form[prefKey()]],
@@ -91,11 +95,11 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   function question(dir, drive, extra = {}) {
     const date = dir === "out" ? form.out : (form.back || form.out);
     return answer(data, { question: form.question, dir, nowMin: nowMin(), date, time: dir === "out" ? form.outTime : form.backTime,
-      pref: form[dir === "out" ? "outPref" : "backPref"], sort: form.sort, drive, fares: allFares(), typical, settings: state.settings, ...extra });
+      pref: form[dir === "out" ? "outPref" : "backPref"], sort: form.sort, drive, fares: allFares(), typical, ships, settings: state.settings, ...extra });
   }
   function roundTrip(drive) {
     if (!form.back) return null;
-    const mk = (dir, date, pref) => byPreference(options(data, { dir, date, drive, fares: allFares(), typical, settings: state.settings }), pref);
+    const mk = (dir, date, pref) => byPreference(options(data, { dir, date, drive, fares: allFares(), typical, ships, settings: state.settings }), pref);
     return summary(mk("out", form.out, form.outPref), mk("back", form.back, form.backPref));
   }
 
@@ -180,6 +184,15 @@ const money = (f) => `£${f.amount.toFixed(f.amount % 1 ? 2 : 0)}`;
 
 function opBadge(o) {
   return o.logo ? `<span class="op"><img src="${esc(o.logo)}" alt="${esc(o.operator)}" height="28"></span>` : `<span class="op op-text">${esc(o.operator)}</span>`;
+}
+/** Has the fast ferry actually been seen sailing? Only Irish Ferries' status pages are watched. */
+export function fastNote(data, shipData) {
+  return (data.fastShips || []).map(ship => {
+    const seen = shipData.fastShipsSeen?.[ship];
+    if (seen) return `${ship} last seen sailing on Irish Ferries' status page ${niceDate(seen)}.`;
+    return shipData.watchingSince ? `${ship} not seen on Irish Ferries' status pages since ${niceDate(shipData.watchingSince)}; its times here are from memory.`
+      : `${ship} not yet checked against Irish Ferries' status pages; its times here are from memory.`;
+  }).join(" ");
 }
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 function fareHtml(o) {

@@ -5,6 +5,7 @@
 // Never invents a price; a page that fails or changes shape leaves the previous data in place and is reported.
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { pageText, parseAferry } from "./aferry-parse.mjs";
+import { parseIrishStatus } from "./irish-status-parse.mjs";
 
 const ROUTES = ["holyhead-dublin", "dublin-holyhead", "fishguard-rosslare", "rosslare-fishguard", "pembroke-rosslare", "rosslare-pembroke"];
 const CODE = { holyhead: "HHD", dublin: "DUB", fishguard: "FGD", rosslare: "RSL", pembroke: "PEM" };
@@ -39,3 +40,32 @@ writeFileSync(OUT, JSON.stringify(out, null, 2) + "\n");
 console.log(report.join("\n"));
 console.log(`quotes kept: ${Object.keys(quotes).length}`);
 for (const [id, q] of Object.entries(quotes)) console.log(`  ${id} £${q.amount} (seen ${q.seenOn})`);
+
+// ---- Ships actually sailing (Irish Ferries status tables): which ship ran each sailing time; Dublin Swift sightings.
+const SHIPS_OUT = new URL("../data/ships.json", import.meta.url);
+const STATUS_PAGES = ["https://www.irishferries.com/uk-en/sailing-updates/dublin-holyhead/", "https://www.irishferries.com/uk-en/sailing-updates/rosslare-pembroke/"];
+const timetable = JSON.parse(readFileSync(new URL("../data/sailings.json", import.meta.url), "utf8"));
+const known = new Set(timetable.routes.flatMap(r => r.sailings.map(x => `${r.id}|${x.dep}`)));
+const shipsPrev = existsSync(SHIPS_OUT) ? JSON.parse(readFileSync(SHIPS_OUT, "utf8")) : {};
+const keepAfter = new Date(Date.parse(today) - 21 * 86400000).toISOString().slice(0, 10);
+const sailings = Object.fromEntries(Object.entries(shipsPrev.sailings || {}).filter(([, v]) => v.seenOn >= keepAfter));
+const fastSeen = { ...(shipsPrev.fastShipsSeen || {}) };
+for (const ship of timetable.fastShips || []) if (!(ship in fastSeen)) fastSeen[ship] = null;
+const unscheduled = [];
+for (const url of STATUS_PAGES) {
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "text/html" }, signal: AbortSignal.timeout(25000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows = parseIrishStatus(pageText(await res.text()));
+    console.log(`${url}: ${rows.length} sailings`);
+    for (const r of rows) {
+      const key = `${r.routeId}|${r.dep}`;
+      sailings[key] = { ship: r.ship, arr: r.arr, status: r.status, seenOn: today };
+      if (r.ship in fastSeen) fastSeen[r.ship] = today;
+      if (!known.has(key)) unscheduled.push({ key, ...r });
+      console.log(`  ${key} ${r.ship} (${r.status})${known.has(key) ? "" : "  ** not in our timetable **"}`);
+    }
+  } catch (e) { console.log(`${url}: FAILED ${e.message} (kept previous data)`); }
+}
+writeFileSync(SHIPS_OUT, JSON.stringify({ updatedOn: today, watchingSince: shipsPrev.watchingSince || today,
+  source: "Irish Ferries sailing-updates status tables", fastShipsSeen: fastSeen, sailings, unscheduled }, null, 2) + "\n");

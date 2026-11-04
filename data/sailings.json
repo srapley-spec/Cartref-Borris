@@ -179,6 +179,17 @@
           "dep": "19:30",
           "durMin": 210,
           "vessel": "James Joyce"
+        },
+        {
+          "dep": "14:30",
+          "durMin": 135,
+          "vessel": "Dublin Swift",
+          "season": {
+            "from": "03-27",
+            "to": "09-30"
+          },
+          "unverified": true,
+          "sourceNote": "Dublin Swift times and season from memory, not seen on any timetable (4 Nov 2026)"
         }
       ],
       "verified": {
@@ -224,6 +235,17 @@
           "dep": "19:45",
           "durMin": 210,
           "vessel": "Ulysses"
+        },
+        {
+          "dep": "08:45",
+          "durMin": 135,
+          "vessel": "Dublin Swift",
+          "season": {
+            "from": "03-27",
+            "to": "09-30"
+          },
+          "unverified": true,
+          "sourceNote": "Dublin Swift times and season from memory, not seen on any timetable (4 Nov 2026)"
         }
       ],
       "verified": {
@@ -389,56 +411,6 @@
         "on": "2026-11-03",
         "basis": "operator average, 3 Nov"
       }
-    },
-    {
-      "id": "irish-HHD-DUB-swift",
-      "operator": "irish",
-      "from": "HHD",
-      "to": "DUB",
-      "checkInMin": 30,
-      "fast": true,
-      "season": {
-        "from": "03-27",
-        "to": "09-30"
-      },
-      "sources": [
-        "https://www.directferries.com/irish_ferries_dublin_swift.htm",
-        "https://ferrygogo.com/ie/dublin-holyhead-ferry-experience/"
-      ],
-      "sourceNote": "Dublin Swift is reported as seasonal and on selected sailings only; season dates and times are from memory, low confidence.",
-      "sailings": [
-        {
-          "dep": "14:30",
-          "durMin": 135,
-          "vessel": "Dublin Swift",
-          "sourceNote": "fast-ferry times from memory"
-        }
-      ]
-    },
-    {
-      "id": "irish-DUB-HHD-swift",
-      "operator": "irish",
-      "from": "DUB",
-      "to": "HHD",
-      "checkInMin": 30,
-      "fast": true,
-      "season": {
-        "from": "03-27",
-        "to": "09-30"
-      },
-      "sources": [
-        "https://www.directferries.com/irish_ferries_dublin_swift.htm",
-        "https://ferrygogo.com/ie/dublin-holyhead-ferry-experience/"
-      ],
-      "sourceNote": "As above.",
-      "sailings": [
-        {
-          "dep": "08:45",
-          "durMin": 135,
-          "vessel": "Dublin Swift",
-          "sourceNote": "fast-ferry times from memory"
-        }
-      ]
     }
   ],
   "excluded": [
@@ -513,5 +485,8 @@
       "R729",
       "N25"
     ]
-  }
+  },
+  "fastShips": [
+    "Dublin Swift"
+  ]
 }

@@ -13,9 +13,11 @@ more of it asleep would mean you'd be better off by the time you get to your des
    a typical list from `data/sailings.json` is shown, labelled "typical roads, unchecked".
    → `tests/plan.test.mjs` "mainRoads: road numbers…", "options carry sleep…"; `tests/page.test.mjs` "with a Google
    key…", "Without Google, each drive shows typical roads…"
-2. **Ship.** Every ferry panel says **Standard ferry** or **Fast ferry**, with the ship's name where known (Irish Ferries
-   from its status pages on 3 Nov: Ulysses, James Joyce, Isle of Innisfree; Dublin Swift for the fast ferry). The ship
-   on a given day can change; Stena names are not yet confirmed. → "options carry sleep…", page "Without Google…"
+2. **Ship.** Every ferry panel says **Standard ferry** or **Fast ferry**, with the ship's name. A sailing is a fast ferry
+   when its ship is on `fastShips` (Dublin Swift) (Sam, 4 Nov: "you should be able to identify it from the timetable").
+   The ship comes from what Irish Ferries' status pages showed for that sailing time (`data/ships.json`, refreshed
+   daily, kept 21 days), else the stored name. Stena names are not yet confirmed.
+   → "options carry sleep…", "fast ferry is identified by the ship…", "observed ships…"; page "Ship sightings…"
 3. **Sleep on board.** Crossing time inside 22:00–07:00, after 20 min settling and stopping 30 min before arrival.
    Driving never counts (the driver can't sleep). Shown as "Sleep ~3h 10m on board". → "sleep on board…",
    "overlapDaily handles…"

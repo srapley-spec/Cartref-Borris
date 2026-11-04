@@ -148,7 +148,8 @@ test("fast ferry: off by default, included only when on and in season", () => {
   assert.equal(on.length, 1); assert.equal(on[0].durMin, 135);
   assert.equal(sailingsOn(data, "out", ["2026-11-20"], { fastFerry: true }).filter(s => s.fast).length, 0, "out of season in November");
   const o = options(data, { dir: "out", date: "2026-06-12", drive: est, settings: { ...settings, fastFerry: true } }).find(x => x.fast);
-  assert.ok(o.flags.includes("fast-ferry times from memory"));
+  assert.ok(o.flags.includes("Dublin Swift times and season from memory, not seen on any timetable (4 Nov 2026)"));
+  assert.ok(o.flags.includes("timetable unverified"), "a route checked with the operator does not vouch for the remembered Swift sailing");
 });
 
 test("Leave now: only options you can still leave for, earliest arrival first, with countdown", () => {
@@ -231,8 +232,9 @@ test("timetable provenance flags: aggregator-only times, unconfirmed day pattern
 
 test("Irish Ferries Dublin→Holyhead matches its own status page (3 Nov 2026): 01:15, 07:30, 13:45, 19:45, 3h30", () => {
   const r = data.routes.find(x => x.id === "irish-DUB-HHD");
-  assert.deepEqual(r.sailings.map(s => s.dep), ["01:15", "07:30", "13:45", "19:45"]);
-  assert.ok(r.sailings.every(s => s.durMin === 210));
+  const std = r.sailings.filter(s => s.vessel !== "Dublin Swift");
+  assert.deepEqual(std.map(s => s.dep), ["01:15", "07:30", "13:45", "19:45"]);
+  assert.ok(std.every(s => s.durMin === 210));
 });
 
 // ---- 4 Nov: sleep on board, night driving, roads, ship type
@@ -291,4 +293,28 @@ test("mainRoads: road numbers from Google steps, first road per step, ≥15 km t
   assert.equal(MAIN_ROAD_KM, 15);
   assert.deepEqual(mainRoads(legs), ["A1(M)", "M25", "N25"]);
   assert.deepEqual(mainRoads([]), []);
+});
+
+test("fast ferry is identified by the ship on the timetable: any Dublin Swift sailing is fast; others are standard", () => {
+  assert.deepEqual(data.fastShips, ["Dublin Swift"]);
+  assert.ok(data.routes.every(r => r.fast === undefined), "no route-level fast flag");
+  const swiftDay = { ...data, routes: data.routes.map(r => r.id !== "irish-HHD-DUB" ? r
+    : { ...r, sailings: r.sailings.map(s => s.dep === "13:15" ? { ...s, vessel: "Dublin Swift", durMin: 135 } : s) }) };
+  const on = sailingsOn(swiftDay, "out", ["2026-11-20"], { fastFerry: true });
+  assert.equal(on.find(s => s.id === "irish-HHD-DUB|2026-11-20|13:15").fast, true);
+  assert.equal(on.find(s => s.id === "irish-HHD-DUB|2026-11-20|07:30").fast, false); // James Joyce
+  const off = sailingsOn(swiftDay, "out", ["2026-11-20"], { fastFerry: false });
+  assert.ok(!off.some(s => s.id === "irish-HHD-DUB|2026-11-20|13:15"), "fast sailings hidden only when the switch is off");
+});
+
+test("observed ships: the ship Irish Ferries' status page showed for a sailing time replaces the stored name; a Swift sighting makes it fast", () => {
+  const ships = { "irish-HHD-DUB|13:15": { ship: "Dublin Swift", seenOn: "2026-11-04" }, "irish-PEM-RSL|14:45": { ship: "Oscar Wilde", seenOn: "2026-11-04" } };
+  const all = options(data, { dir: "out", date: "2026-11-20", drive: est, ships, settings: { ...settings, fastFerry: true } });
+  const swift = all.find(o => o.id === "irish-HHD-DUB|2026-11-20|13:15");
+  assert.equal(swift.vessel, "Dublin Swift"); assert.equal(swift.fast, true); assert.equal(swift.vesselSeen, true);
+  assert.equal(swift.shipType, "Fast ferry");
+  const pem = all.find(o => o.id === "irish-PEM-RSL|2026-11-20|14:45");
+  assert.equal(pem.vessel, "Oscar Wilde"); assert.equal(pem.fast, false);
+  const other = all.find(o => o.id === "irish-HHD-DUB|2026-11-20|07:30");
+  assert.equal(other.vessel, "James Joyce"); assert.equal(other.vesselSeen, false);
 });

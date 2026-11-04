@@ -23,7 +23,7 @@ until they are updated; say so.
   (`verified.by`: operator or aggregator, and when); the page shows that per option. Re-check with the manual
   "Probe ferry sources" workflow (`tools/probe-sources.mjs`); this session's network can't reach the ferry sites. Drive times from the
   fallback estimates are marked `*`. Prices are only ones Sam entered, dated quotes actually fetched, or fetched averages labelled "typical, not a quote";
-  never invented. `data/fares.json` is written daily by the fares bot; tests must not read it.
+  never invented. `data/fares.json` and `data/ships.json` are written daily by the fares bot; tests must not read them.
 - **Answer the real questions:** when to leave home, which crossing, when you arrive, what it costs.
 - `src/core` is pure: no DOM, network or clock reads; data and drive times are injected.
 - Every time on screen comes from `options()` in `src/core/plan.js`; no timing arithmetic in the page.

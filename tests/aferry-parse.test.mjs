@@ -36,3 +36,14 @@ test("resolveDate: weekday decides the year; a mismatched weekday gives null", (
 test("pageText: tags become separators, entities decoded", () => {
   assert.equal(pageText("<div>Irish Ferries</div><span>£172</span><p>A &amp; B</p>").trim(), "| Irish Ferries | £172 | A & B |");
 });
+
+import { parseIrishStatus } from "../tools/irish-status-parse.mjs";
+test("Irish Ferries status rows: route, times, ship and status, whatever the cell separators", () => {
+  const plain = "Scheduled Departure Scheduled Arrival Ship Status Dublin - Holyhead 07:30 11:00 Ulysses Arrived More Information. Sailing Update We wish to advise… Rosslare - Pembroke 20:45 00:46 Isle of Innisfree On Time More Information";
+  const piped = "| Holyhead - Dublin | 14:30 | 16:45 | Dublin Swift | Early Sailing | More Information |";
+  assert.deepEqual(parseIrishStatus(plain), [
+    { routeId: "irish-DUB-HHD", from: "DUB", to: "HHD", dep: "07:30", arr: "11:00", ship: "Ulysses", status: "Arrived" },
+    { routeId: "irish-RSL-PEM", from: "RSL", to: "PEM", dep: "20:45", arr: "00:46", ship: "Isle of Innisfree", status: "On Time" },
+  ]);
+  assert.deepEqual(parseIrishStatus(piped).map(r => [r.routeId, r.dep, r.ship]), [["irish-HHD-DUB", "14:30", "Dublin Swift"]]);
+});

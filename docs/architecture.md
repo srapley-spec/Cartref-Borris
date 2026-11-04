@@ -12,6 +12,7 @@ cost, filtered on request to day or overnight travel.
 | Engine (pure) | `src/core/plan.js` | Builds options, overnight classification, filtering, ranking, round-trip summary |
 | Adapter | `src/google.js` | Google Routes API `computeRoutes` from the browser (traffic-aware, future departure time) |
 | Page | `src/app.js`, `index.html` | Signal layout (from Cartref Commute), questions, settings, fares entry, drive-time fetch + cache, drawing |
+| Ships seen | `data/ships.json`, written daily by `tools/fetch-fares.mjs` | Ship per Irish Ferries sailing time; Dublin Swift last seen |
 | Fares | `data/fares.json`, written daily by `tools/fetch-fares.mjs` (GitHub Action `fares.yml`) | AFerry dated quotes, monthly and operator averages; see [fares story](stories/fares.md) |
 
 ## Option model
@@ -68,6 +69,10 @@ For a sailing departing `dep` with crossing `durMin` and operator check-in `chec
   Sleep-on-board and night-driving model and a Best sleep ranking ([story](stories/roads-ship-sleep.md)).
 - **4 Nov 2026** Fares bot fixed: it compared with `git diff`, which ignores a new untracked file, so the first run
   saved nothing; it now uses `git status --porcelain`.
+
+- **4 Nov 2026** Fast ferry identified by ship (`fastShips`), not by a route flag (Sam). The daily job also reads Irish
+  Ferries' Dublin–Holyhead and Rosslare–Pembroke status tables into `data/ships.json` (ship per sailing time, Swift
+  sightings, sailings not in our timetable). The engine prefers the observed ship.
 
 ## Known gaps / next
 1. Confirm Stena times from Stena itself and the day-of-week patterns; re-run the probe when timetables change.

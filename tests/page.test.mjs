@@ -27,7 +27,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); server?.close(); });
 
-async function openPage({ google, fares } = {}) {
+async function openPage({ google, fares, ships } = {}) {
   const ctx = await browser.newContext({ timezoneId: "Europe/London" });
   const page = await ctx.newPage();
   page.on("pageerror", e => console.error("pageerror:", e.message));
@@ -39,6 +39,7 @@ async function openPage({ google, fares } = {}) {
     await route.fulfill(google ? google(calls.at(-1)) : { status: 500, body: "no" });
   });
   // data/fares.json is refreshed daily by a bot; tests never read the live file.
+  await page.route("**/data/ships.json", (route) => route.fulfill(ships ? { status: 200, contentType: "application/json", body: JSON.stringify(ships) } : { status: 404, body: "" }));
   await page.route("**/data/fares.json", (route) => route.fulfill(fares ? { status: 200, contentType: "application/json", body: JSON.stringify(fares) } : { status: 404, body: "" }));
   await page.goto(base);
   await page.waitForSelector("#hero .opt");
@@ -221,4 +222,16 @@ test("Best sleep ranking: most sleep on board first, with sleep and night-drivin
   assert.match(await best.textContent(), /Sleep ~3h \d\dm on board/);
   assert.match(await page.textContent("#contextSummary"), /Best sleep/);
   await ctx.close();
+});
+
+test("Ship sightings: the observed ship is shown; the fast-ferry note says whether the Dublin Swift has been seen", async () => {
+  const ships = { watchingSince: "2026-11-04", fastShipsSeen: { "Dublin Swift": null },
+    sailings: { "irish-HHD-DUB|19:30": { ship: "Ulysses", seenOn: "2026-11-04" } } };
+  const { page, ctx } = await openPage({ ships });
+  assert.match(await page.locator("#hero > .opt .ship").first().textContent(), /Standard ferry · Ulysses/); // stored: James Joyce
+  assert.match(await page.textContent("#fastNote"), /Dublin Swift not seen on Irish Ferries' status pages since Wed 4 Nov; its times here are from memory\./);
+  await ctx.close();
+  const seen = await openPage({ ships: { ...ships, fastShipsSeen: { "Dublin Swift": "2026-11-02" } } });
+  assert.match(await seen.page.textContent("#fastNote"), /Dublin Swift last seen sailing on Irish Ferries' status page Mon 2 Nov\./);
+  await seen.ctx.close();
 });
