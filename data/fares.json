@@ -1,0 +1,449 @@
+{
+  "fetchedAt": "2026-11-04T09:27:38.825Z",
+  "fetchedOn": "2026-11-04",
+  "source": "AFerry public route pages (www.aferry.com/en-gb/<route>/)",
+  "routes": {
+    "HHD-DUB": {
+      "url": "https://www.aferry.com/en-gb/holyhead-dublin/",
+      "fetchedOn": "2026-11-04",
+      "monthly": {
+        "1": {
+          "amount": 167,
+          "season": "Off-Peak"
+        },
+        "2": {
+          "amount": 179,
+          "season": "Peak Period"
+        },
+        "3": {
+          "amount": 179,
+          "season": "Peak Period"
+        },
+        "4": {
+          "amount": 174,
+          "season": "Mid-Season"
+        },
+        "5": {
+          "amount": 168,
+          "season": "Off-Peak"
+        },
+        "6": {
+          "amount": 168,
+          "season": "Off-Peak"
+        },
+        "7": {
+          "amount": 183,
+          "season": "Peak Period"
+        },
+        "8": {
+          "amount": 171,
+          "season": "Mid-Season"
+        },
+        "9": {
+          "amount": 175,
+          "season": "Mid-Season"
+        },
+        "10": {
+          "amount": 176,
+          "season": "Mid-Season"
+        },
+        "11": {
+          "amount": 167,
+          "season": "Off-Peak"
+        },
+        "12": {
+          "amount": 180,
+          "season": "Peak Period"
+        }
+      },
+      "operatorAvg": {
+        "irish": {
+          "amount": 165,
+          "duration": "3h 30min",
+          "weeklySailings": 28
+        },
+        "stena": {
+          "amount": 178,
+          "duration": "3h 30min",
+          "weeklySailings": 26
+        }
+      }
+    },
+    "DUB-HHD": {
+      "url": "https://www.aferry.com/en-gb/dublin-holyhead/",
+      "fetchedOn": "2026-11-04",
+      "monthly": {
+        "1": {
+          "amount": 171,
+          "season": "Off-Peak"
+        },
+        "2": {
+          "amount": 187,
+          "season": "Peak Period"
+        },
+        "3": {
+          "amount": 191,
+          "season": "Peak Period"
+        },
+        "4": {
+          "amount": 175,
+          "season": "Mid-Season"
+        },
+        "5": {
+          "amount": 174,
+          "season": "Off-Peak"
+        },
+        "6": {
+          "amount": 174,
+          "season": "Off-Peak"
+        },
+        "7": {
+          "amount": 198,
+          "season": "Peak Period"
+        },
+        "8": {
+          "amount": 189,
+          "season": "Peak Period"
+        },
+        "9": {
+          "amount": 184,
+          "season": "Mid-Season"
+        },
+        "10": {
+          "amount": 179,
+          "season": "Mid-Season"
+        },
+        "11": {
+          "amount": 172,
+          "season": "Off-Peak"
+        },
+        "12": {
+          "amount": 181,
+          "season": "Mid-Season"
+        }
+      },
+      "operatorAvg": {
+        "irish": {
+          "amount": 143,
+          "duration": "3h 30min",
+          "weeklySailings": 28
+        },
+        "stena": {
+          "amount": 176,
+          "duration": "3h 30min",
+          "weeklySailings": 26
+        }
+      }
+    },
+    "FGD-RSL": {
+      "url": "https://www.aferry.com/en-gb/fishguard-rosslare/",
+      "fetchedOn": "2026-11-04",
+      "monthly": {
+        "1": {
+          "amount": 199,
+          "season": "Mid-Season"
+        },
+        "2": {
+          "amount": 171,
+          "season": "Off-Peak"
+        },
+        "3": {
+          "amount": 177,
+          "season": "Off-Peak"
+        },
+        "4": {
+          "amount": 199,
+          "season": "Mid-Season"
+        },
+        "5": {
+          "amount": 202,
+          "season": "Peak Period"
+        },
+        "6": {
+          "amount": 198,
+          "season": "Mid-Season"
+        },
+        "7": {
+          "amount": 214,
+          "season": "Peak Period"
+        },
+        "8": {
+          "amount": 200,
+          "season": "Peak Period"
+        },
+        "9": {
+          "amount": 196,
+          "season": "Mid-Season"
+        },
+        "10": {
+          "amount": 186,
+          "season": "Off-Peak"
+        },
+        "11": {
+          "amount": 202,
+          "season": "Peak Period"
+        },
+        "12": {
+          "amount": 195,
+          "season": "Off-Peak"
+        }
+      },
+      "operatorAvg": {
+        "stena": {
+          "amount": 176,
+          "duration": "3h 45min",
+          "weeklySailings": 14
+        }
+      }
+    },
+    "RSL-FGD": {
+      "url": "https://www.aferry.com/en-gb/rosslare-fishguard/",
+      "fetchedOn": "2026-11-04",
+      "monthly": {
+        "1": {
+          "amount": 207,
+          "season": "Peak Period"
+        },
+        "2": {
+          "amount": 176,
+          "season": "Mid-Season"
+        },
+        "3": {
+          "amount": 165,
+          "season": "Off-Peak"
+        },
+        "4": {
+          "amount": 173,
+          "season": "Off-Peak"
+        },
+        "5": {
+          "amount": 173,
+          "season": "Off-Peak"
+        },
+        "6": {
+          "amount": 191,
+          "season": "Mid-Season"
+        },
+        "7": {
+          "amount": 197,
+          "season": "Peak Period"
+        },
+        "8": {
+          "amount": 194,
+          "season": "Mid-Season"
+        },
+        "9": {
+          "amount": 196,
+          "season": "Peak Period"
+        },
+        "10": {
+          "amount": 181,
+          "season": "Mid-Season"
+        },
+        "11": {
+          "amount": 200,
+          "season": "Peak Period"
+        },
+        "12": {
+          "amount": 159,
+          "season": "Off-Peak"
+        }
+      },
+      "operatorAvg": {
+        "stena": {
+          "amount": 200,
+          "duration": "3h 30min",
+          "weeklySailings": 14
+        }
+      }
+    },
+    "PEM-RSL": {
+      "url": "https://www.aferry.com/en-gb/pembroke-rosslare/",
+      "fetchedOn": "2026-11-04",
+      "monthly": {
+        "1": {
+          "amount": 192,
+          "season": "Peak Period"
+        },
+        "2": {
+          "amount": 187,
+          "season": "Mid-Season"
+        },
+        "3": {
+          "amount": 171,
+          "season": "Off-Peak"
+        },
+        "4": {
+          "amount": 187,
+          "season": "Peak Period"
+        },
+        "5": {
+          "amount": 187,
+          "season": "Peak Period"
+        },
+        "6": {
+          "amount": 179,
+          "season": "Mid-Season"
+        },
+        "7": {
+          "amount": 192,
+          "season": "Peak Period"
+        },
+        "8": {
+          "amount": 174,
+          "season": "Off-Peak"
+        },
+        "9": {
+          "amount": 176,
+          "season": "Mid-Season"
+        },
+        "10": {
+          "amount": 167,
+          "season": "Off-Peak"
+        },
+        "11": {
+          "amount": 180,
+          "season": "Mid-Season"
+        },
+        "12": {
+          "amount": 167,
+          "season": "Off-Peak"
+        }
+      },
+      "operatorAvg": {
+        "irish": {
+          "amount": 172,
+          "duration": "4h 1min",
+          "weeklySailings": 14
+        }
+      }
+    },
+    "RSL-PEM": {
+      "url": "https://www.aferry.com/en-gb/rosslare-pembroke/",
+      "fetchedOn": "2026-11-04",
+      "monthly": {
+        "1": {
+          "amount": 392,
+          "season": "Peak Period"
+        },
+        "2": {
+          "amount": 212,
+          "season": "Mid-Season"
+        },
+        "3": {
+          "amount": 377,
+          "season": "Mid-Season"
+        },
+        "4": {
+          "amount": 386,
+          "season": "Mid-Season"
+        },
+        "5": {
+          "amount": 167,
+          "season": "Off-Peak"
+        },
+        "6": {
+          "amount": 410,
+          "season": "Peak Period"
+        },
+        "7": {
+          "amount": 203,
+          "season": "Off-Peak"
+        },
+        "8": {
+          "amount": 236,
+          "season": "Mid-Season"
+        },
+        "9": {
+          "amount": 191,
+          "season": "Off-Peak"
+        },
+        "10": {
+          "amount": 172,
+          "season": "Off-Peak"
+        },
+        "11": {
+          "amount": 459,
+          "season": "Peak Period"
+        },
+        "12": {
+          "amount": 427,
+          "season": "Peak Period"
+        }
+      },
+      "operatorAvg": {
+        "irish": {
+          "amount": 169,
+          "duration": "4h 1min",
+          "weeklySailings": 14
+        }
+      }
+    }
+  },
+  "quotes": {
+    "stena-HHD-DUB|2026-11-04|16:00": {
+      "amount": 155,
+      "currency": "GBP",
+      "date": "2026-11-04",
+      "seenOn": "2026-11-04",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/holyhead-dublin/"
+    },
+    "irish-HHD-DUB|2026-11-04|19:30": {
+      "amount": 148,
+      "currency": "GBP",
+      "date": "2026-11-04",
+      "seenOn": "2026-11-04",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/holyhead-dublin/"
+    },
+    "irish-HHD-DUB|2026-11-09|13:15": {
+      "amount": 158,
+      "currency": "GBP",
+      "date": "2026-11-09",
+      "seenOn": "2026-11-04",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/holyhead-dublin/"
+    },
+    "irish-DUB-HHD|2026-11-04|20:55": {
+      "amount": 144.83,
+      "currency": "GBP",
+      "date": "2026-11-04",
+      "seenOn": "2026-11-04",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/dublin-holyhead/"
+    },
+    "stena-DUB-HHD|2026-11-05|22:30": {
+      "amount": 165,
+      "currency": "GBP",
+      "date": "2026-11-05",
+      "seenOn": "2026-11-04",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/dublin-holyhead/"
+    },
+    "stena-DUB-HHD|2026-11-07|22:30": {
+      "amount": 169,
+      "currency": "GBP",
+      "date": "2026-11-07",
+      "seenOn": "2026-11-04",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/dublin-holyhead/"
+    },
+    "irish-PEM-RSL|2026-11-06|14:45": {
+      "amount": 192,
+      "currency": "GBP",
+      "date": "2026-11-06",
+      "seenOn": "2026-11-04",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/pembroke-rosslare/"
+    },
+    "irish-RSL-PEM|2026-11-06|20:45": {
+      "amount": 316,
+      "currency": "GBP",
+      "date": "2026-11-06",
+      "seenOn": "2026-11-04",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/rosslare-pembroke/"
+    }
+  }
+}
