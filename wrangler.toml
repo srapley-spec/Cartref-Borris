@@ -1,0 +1,9 @@
+# Cloudflare Worker config. With the repo connected in Cloudflare (Workers & Pages → the Worker → Settings → Build →
+# Connect repository), every push to main redeploys the Worker automatically. Wrangler bundles the imports itself.
+name = "cartref-borris"
+main = "proxy/worker-src.mjs"
+compatibility_date = "2026-10-01"
+
+[vars]
+# Only the app's own site may use the Worker. Not a secret.
+ALLOW_ORIGIN = "https://srapley-spec.github.io"

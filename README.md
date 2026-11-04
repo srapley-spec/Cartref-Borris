@@ -11,9 +11,15 @@ every Stena Line / Irish Ferries option door to door, ranked by time or by cost.
 Start with `CLAUDE.md`. Tests: `npm test`.
 
 ## Live prices and live sailing status (optional, one-off setup; strongly recommended for status)
-1. Cloudflare dashboard → Workers & Pages → Create → Worker → paste the whole of `proxy/worker.js` → Deploy.
-2. Worker → Settings → Variables: add `ALLOW_ORIGIN` = `https://srapley-spec.github.io`.
-3. In the app: Settings → Proxy URL = the worker's `https://….workers.dev` address → Save.
-   With it set, the app reads Stena's and Irish Ferries' sailing status the moment you open it (and every 5 minutes),
-   instead of relying on the twice-hourly collected file.
-After changing `proxy/worker-src.mjs` or `tools/aferry-search.mjs`, run `node tools/build-worker.mjs` and re-paste.
+The app needs a small helper on the internet (a free Cloudflare Worker) to read AFerry, Stena and Irish Ferries for it.
+Connect it to this repo once and Cloudflare redeploys it automatically on every push to `main`; nothing to paste.
+1. Create a free account at dash.cloudflare.com.
+2. Workers & Pages → Create → **Import a repository** → connect GitHub → choose `srapley-spec/Cartref-Borris`.
+   Leave the build command empty; the deploy command is `npx wrangler deploy` (the default). Production branch: `main`.
+   `wrangler.toml` in the repo tells Cloudflare everything else, including `ALLOW_ORIGIN`.
+3. Copy the Worker's `https://….workers.dev` address into the app: Settings → Proxy URL → Save.
+With it set, the app reads sailing status the moment you open it (and every 5 minutes) and shows live prices for your
+dates. Without it, the app uses the twice-hourly collected status and typical prices, and says so.
+
+(Fallback if you'd rather not connect GitHub: create a Worker by hand and paste the whole of `proxy/worker.js`, plus a
+variable `ALLOW_ORIGIN` = `https://srapley-spec.github.io`. That copy does not update itself.)

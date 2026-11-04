@@ -37,8 +37,10 @@ Never ask for or handle a raw API key in chat, the repo, tests or logs. The Goog
 Settings (localStorage) and, for verification in cloud sessions, the environment secret `GOOGLE_MAPS_KEY`.
 
 ## Proxy (Cloudflare Worker)
-- Source `proxy/worker-src.mjs` + `tools/aferry-search.mjs`; `node tools/build-worker.mjs` writes the paste-ready
-  `proxy/worker.js` (a test fails if it's stale). Sam deploys it by hand; tell him when it needs re-pasting.
+- Source `proxy/worker-src.mjs` (+ the `tools/` modules it imports). `wrangler.toml` points Cloudflare at it; with the
+  repo connected in Cloudflare (Workers Builds), every push to `main` redeploys the Worker. Check a change builds with
+  `npx wrangler deploy --dry-run`. `proxy/worker.js` is a paste-ready bundle for a hand-made Worker only
+  (`node tools/build-worker.mjs`; a test fails if it's stale).
 - Identify honestly (`UA` in `tools/aferry-search.mjs`); never disguise the client or work around a site's bot checks.
 
 ## Build, test, release

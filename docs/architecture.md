@@ -106,6 +106,10 @@ planner uses; outside it the timetable pattern below is a labelled estimate. See
   collected file; the GitHub schedule is the fallback. The collector core (`tools/status-core.mjs`) is shared by the
   Action and the Worker; the bundler now refuses duplicate top-level names.
 
+- **4 Nov 2026** Worker deploys from the repo (Sam: "connect to GitHub so we can update things in one go"):
+  `wrangler.toml` (main `proxy/worker-src.mjs`, `ALLOW_ORIGIN` as a plain var). Sam connects the repo once in Cloudflare;
+  pushes to `main` then redeploy it. Validated with `wrangler deploy --dry-run` (24 KB bundle, responds correctly).
+
 ## Known gaps / next
 1. Timetable pattern (future dates): confirm Stena's pattern from Stena; fix day-of-week patterns using `unscheduled` from the collector.
 1b. Without the Worker, status is GitHub-scheduled (best effort). Confirm the operators' permitted automated use before relying on this for a wider audience.
