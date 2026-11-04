@@ -27,14 +27,32 @@ export async function driveMinutes({ key, origin, destination, departLocalMin, n
   if (Date.parse(iso) > nowMs + 60000) body.departureTime = iso;
   const res = await fetchFn(URL_ROUTES, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Goog-Api-Key": key, "X-Goog-FieldMask": "routes.duration,routes.distanceMeters" },
+    headers: { "Content-Type": "application/json", "X-Goog-Api-Key": key, "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.legs.steps.distanceMeters,routes.legs.steps.navigationInstruction.instructions" },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`Google Routes ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const j = await res.json();
   const d = j.routes?.[0]?.duration;
   if (!d) throw new Error("Google Routes: no route");
-  return Math.round(parseInt(d, 10) / 60);
+  return { min: Math.round(parseInt(d, 10) / 60), roads: mainRoads(j.routes[0].legs || []) };
+}
+
+// Road numbers in UK and Irish form: M6, A1(M), A55, N25, R729.
+const ROAD = /\b([AMNR]\d{1,4}(?:\(M\)|\b))/g; // "(M)" ends with ")", so no trailing \b there
+export const MAIN_ROAD_KM = 15;
+/** Roads named in the steps, in order of first use, keeping those used for at least MAIN_ROAD_KM in total. */
+export function mainRoads(legs, maxRoads = 7) {
+  const km = new Map(), order = [];
+  for (const leg of legs) for (const st of leg.steps || []) {
+    const text = st.navigationInstruction?.instructions || "";
+    const names = [...new Set([...text.matchAll(ROAD)].map(m => m[1]))];
+    if (!names.length) continue;
+    // A step naming several roads ("A14 toward M6") is credited to the first one: the road you're on.
+    const r = names[0];
+    if (!km.has(r)) { km.set(r, 0); order.push(r); }
+    km.set(r, km.get(r) + (st.distanceMeters || 0) / 1000);
+  }
+  return order.filter(r => km.get(r) >= MAIN_ROAD_KM).slice(0, maxRoads);
 }
 
 /** Real time (ms since epoch) -> local minutes on the UK/IE wall clock. */

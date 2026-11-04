@@ -234,3 +234,61 @@ test("Irish Ferries Dublin→Holyhead matches its own status page (3 Nov 2026): 
   assert.deepEqual(r.sailings.map(s => s.dep), ["01:15", "07:30", "13:45", "19:45"]);
   assert.ok(r.sailings.every(s => s.durMin === 210));
 });
+
+// ---- 4 Nov: sleep on board, night driving, roads, ship type
+import { sleepOnBoard, overlapDaily, rankBySleep, SLEEP } from "../src/core/plan.js";
+
+test("sleep on board: crossing time inside 22:00–07:00, after 20 min settling, stopping 30 min before arrival", () => {
+  assert.equal(sleepOnBoard(T("2026-11-20", "02:45"), T("2026-11-20", "06:46")), 191);      // 03:05–06:16
+  assert.equal(sleepOnBoard(T("2026-11-20", "22:15"), T("2026-11-21", "01:45")), 160);      // 22:35–01:15
+  assert.equal(sleepOnBoard(T("2026-11-20", "20:45"), T("2026-11-21", "00:46")), 136);      // 22:00–00:16
+  assert.equal(sleepOnBoard(T("2026-11-20", "14:45"), T("2026-11-20", "18:46")), 0);        // daytime
+  assert.equal(sleepOnBoard(T("2026-11-20", "05:30"), T("2026-11-20", "09:00")), 70);       // 05:50–07:00
+  assert.equal(sleepOnBoard(T("2026-11-20", "06:50"), T("2026-11-20", "07:30")), 0);        // too short once settled
+  assert.equal(SLEEP.nightStart, 22 * 60);
+});
+
+test("overlapDaily handles windows that wrap midnight and spans of several days", () => {
+  assert.equal(overlapDaily(T("2026-11-20", "21:00"), T("2026-11-21", "08:00"), 22 * 60, 7 * 60), 9 * 60);
+  assert.equal(overlapDaily(T("2026-11-20", "00:00"), T("2026-11-22", "00:00"), 0, 5 * 60), 10 * 60);
+  assert.equal(overlapDaily(T("2026-11-20", "10:00"), T("2026-11-20", "09:00"), 0, 5 * 60), 0);
+});
+
+test("options carry sleep, night driving (drive time between 00:00 and 05:00), ship type and roads", () => {
+  const all = options(data, { dir: "out", date: "2026-11-20", drive: est, settings });
+  const pem = all.find(o => o.id === "irish-PEM-RSL|2026-11-21|02:45");
+  assert.equal(pem.sleepMin, 191);
+  // leave 21:20 Fri, at Pembroke by 02:00 Sat: 2h of night driving; off at 07:06, so none after.
+  assert.equal(pem.nightDriveMin, 120);
+  assert.equal(pem.shipType, "Standard ferry"); assert.equal(pem.vessel, "Isle of Innisfree");
+  assert.deepEqual(pem.driveTo.roads, { list: ["A1(M)", "M25", "M4", "A48", "A477"], source: "typical" });
+  assert.equal(pem.driveFrom.country, "IE");
+  const day = all.find(o => o.id === "irish-PEM-RSL|2026-11-20|14:45");
+  assert.equal(day.sleepMin, 0); assert.equal(day.nightDriveMin, 0);
+  const g = makeDrive(data, (f, t) => ({ min: 200, source: "google", roads: ["M6", "A55"] }));
+  const o = options(data, { dir: "out", date: "2026-11-20", drive: g, settings }).find(x => x.id === "irish-PEM-RSL|2026-11-20|14:45");
+  assert.deepEqual(o.driveTo.roads, { list: ["M6", "A55"], source: "google" });
+  const fast = options(data, { dir: "out", date: "2026-06-12", drive: est, settings: { ...settings, fastFerry: true } }).find(x => x.fast);
+  assert.equal(fast.shipType, "Fast ferry"); assert.equal(fast.vessel, "Dublin Swift");
+});
+
+test("Best sleep: most sleep (15-min bands) first; ties go to less night driving, then shorter journey", () => {
+  const a = answer(data, { question: "fastest", dir: "out", date: "2026-11-20", sort: "sleep", drive: est, settings });
+  assert.equal(a.label, "Most sleep");
+  for (let i = 1; i < a.list.length; i++) assert.ok(Math.floor(a.list[i - 1].sleepMin / 15) >= Math.floor(a.list[i].sleepMin / 15));
+  // Fishguard 01:30 (3h10 sleep) and Pembroke 02:45 (3h11) share a band; Fishguard needs less night driving.
+  assert.equal(a.best.id, "stena-FGD-RSL|2026-11-21|01:30");
+  assert.ok(a.best.nightDriveMin < a.list.find(o => o.id === "irish-PEM-RSL|2026-11-21|02:45").nightDriveMin);
+  const mk = (id, sleepMin, nightDriveMin, totalMin) => ({ id, sleepMin, nightDriveMin, totalMin });
+  assert.deepEqual(rankBySleep([mk("a", 100, 0, 600), mk("b", 200, 90, 700), mk("c", 200, 30, 800), mk("d", 205, 30, 700)]).map(o => o.id), ["d", "c", "b", "a"]);
+});
+
+import { mainRoads, MAIN_ROAD_KM } from "../src/google.js";
+test("mainRoads: road numbers from Google steps, first road per step, ≥15 km total, order of first use, A1(M) kept whole", () => {
+  const st = (km, text) => ({ distanceMeters: km * 1000, navigationInstruction: { instructions: text } });
+  const legs = [{ steps: [st(3, "Head north on Hitchin Road"), st(20, "Merge onto A1(M) toward M25"), st(10, "Continue on A1(M)"),
+    st(14, "Turn right onto A505"), st(60, "Keep left onto M25"), st(15, "Take the N25 exit"), st(2, "Turn left onto R729")] }];
+  assert.equal(MAIN_ROAD_KM, 15);
+  assert.deepEqual(mainRoads(legs), ["A1(M)", "M25", "N25"]);
+  assert.deepEqual(mainRoads([]), []);
+});

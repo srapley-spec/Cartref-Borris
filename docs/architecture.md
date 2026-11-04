@@ -63,6 +63,12 @@ For a sailing departing `dep` with crossing `durMin` and operator check-in `chec
 - **4 Nov 2026** Fares from AFerry public route pages, daily (Sam: "we do need prices"). Typical (average) prices may
   order unquoted options in Cheapest, labelled as typical; this refines the earlier "never ranked on".
 
+- **4 Nov 2026** Main roads from Google steps (field mask adds `routes.legs.steps.distanceMeters` and
+  `…navigationInstruction.instructions`); typical roads in data as a labelled fallback. Ship type/name per sailing.
+  Sleep-on-board and night-driving model and a Best sleep ranking ([story](stories/roads-ship-sleep.md)).
+- **4 Nov 2026** Fares bot fixed: it compared with `git diff`, which ignores a new untracked file, so the first run
+  saved nothing; it now uses `git status --porcelain`.
+
 ## Known gaps / next
 1. Confirm Stena times from Stena itself and the day-of-week patterns; re-run the probe when timetables change.
 2. Measure the fallback drive estimates with Google (needs `GOOGLE_MAPS_KEY` in the environment).
@@ -70,3 +76,4 @@ For a sailing departing `dep` with crossing `durMin` and operator check-in `chec
 4. Booking links go to operator home pages; deep links with dates are unverified.
 5. Verify whether Dublin Swift runs in 2026 and its times; add Stena fast craft if any.
 6. Without a Google key, Fastest cannot see traffic and several options tie.
+7. Confirm the typical road lists with Google and Stena's ship names.

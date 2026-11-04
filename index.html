@@ -76,6 +76,14 @@ button { font:inherit; min-width:44px; min-height:44px; touch-action:manipulatio
 .op { display:inline-flex; align-items:center; padding:3px 6px; border-radius:7px; background:#fff; box-shadow:0 0 0 1px var(--line); }
 .op img { display:block; height:28px; width:auto; } .op-text { color:#142436; font-size:13px; font-weight:700; }
 .chips { display:flex; flex-wrap:wrap; gap:6px; }
+.drive-leg { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; font-size:14px; }
+.drive-leg .dl { font-weight:600; } .roads { display:inline-flex; flex-wrap:wrap; gap:4px; } .roads-src { color:var(--muted); font-size:12px; }
+/* Road signs (identity, not status): UK/IE motorway blue/white; UK primary A green/yellow; IE national N green/white-yellow; IE regional R white. */
+.road { display:inline-block; min-width:2.6em; text-align:center; padding:1px 6px; border-radius:4px; font-size:13px; font-weight:800; line-height:1.35; letter-spacing:.01em; border:1.5px solid #fff; box-shadow:0 0 0 1px #0003; }
+.road-m { background:#1d5eb4; color:#fff; } .road-a { background:#00703c; color:#ffd200; } .road-n { background:#00703c; color:#ffd200; }
+.road-r { background:#fff; color:#111; border-color:#111; box-shadow:none; }
+.ship { font-size:14px; color:var(--muted); } .ship b { color:var(--ink); }
+.tag.sleep { background:var(--signal-soft); border-color:transparent; } .tag.night-drive { color:var(--note); background:var(--note-bg); border-color:transparent; }
 .chip { font-size:13px; font-weight:600; padding:4px 8px; border-radius:7px; border:1px solid var(--line); background:var(--card); }
 .fare { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; font-size:14px; }
 .fare .price { font-size:20px; font-weight:750; } .fare .price.typical { font-weight:600; color:var(--muted); } .src { color:var(--muted); font-size:13px; }
@@ -114,7 +122,7 @@ h2 { font-size:16px; margin:12px 0 0; color:var(--muted); }
       <label class="f">Leave Borris<input type="date" id="backDate"></label>
     </div>
     <div class="ctlrow"><div class="seg" id="prefSeg" role="group" aria-label="Day or overnight"><button data-v="day">Day</button><button data-v="overnight">Overnight</button><button data-v="any">Either</button></div>
-      <div class="seg" id="sortSeg" role="group" aria-label="Rank by"><button data-v="time">Fastest</button><button data-v="cost">Cheapest</button></div></div>
+      <div class="seg" id="sortSeg" role="group" aria-label="Rank by"><button data-v="time">Fastest</button><button data-v="cost">Cheapest</button><button data-v="sleep">Best sleep</button></div></div>
     <div class="ctlrow"><span class="f" style="display:inline">Stops on the UK drive</span><div class="stepper"><button class="ghost" id="stopsDown" aria-label="Fewer stops">−</button><b id="stopsVal">1</b><button class="ghost" id="stopsUp" aria-label="More stops">+</button></div>
       <button class="ghost" id="fastFerry" aria-pressed="false">Fast ferry: off</button></div>
   </details>

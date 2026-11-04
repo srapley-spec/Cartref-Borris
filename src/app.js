@@ -47,7 +47,7 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
     const date = form.dir === "out" ? form.out : form.back;
     $("#contextSummary").textContent = [form.question === "now" ? "Today" : niceDate(date || form.out),
       { any: "Day or night", day: "Day only", overnight: "Overnight only" }[form[prefKey()]],
-      form.sort === "cost" ? "Cheapest" : "Fastest",
+      { cost: "Cheapest", sleep: "Best sleep" }[form.sort] || "Fastest",
       `${state.settings.stops} stop${state.settings.stops === 1 ? "" : "s"}`,
       state.settings.fastFerry ? "Fast ferry on" : "Fast ferry off"].join(" · ");
   }
@@ -82,7 +82,11 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   };
   const addr = (k) => (data.places[k] || data.ports[k]).address;
   const ckey = (from, to, m) => `${from}>${to}@${bucket(m)}`;
-  const lookup = (from, to, m) => { const v = state.driveCache[ckey(from, to, m)]; return v != null ? { min: v, source: "google" } : null; };
+  const lookup = (from, to, m) => {
+    const v = state.driveCache[ckey(from, to, m)];
+    if (v == null) return null;
+    return typeof v === "number" ? { min: v, source: "google" } : { min: v.min, roads: v.roads || [], source: "google" }; // numbers: cache before roads
+  };
 
   function question(dir, drive, extra = {}) {
     const date = dir === "out" ? form.out : (form.back || form.out);
@@ -184,6 +188,16 @@ function fareHtml(o) {
   if (o.typicalFare) return `<span class="price typical">~£${o.typicalFare.amount}</span><span class="src">typical, not a quote (AFerry ${esc(o.typicalFare.basis || "average")})</span>`;
   return `<span class="src">No price yet</span>`;
 }
+/** Road number as a lozenge in that country's sign colours: motorways (and A(M)) blue; UK A roads green with yellow
+ *  numbers; Irish N roads green; Irish R roads white. */
+export function roadSign(road, country) {
+  const kind = /^M\d|\(M\)$/.test(road) ? "m" : road[0] === "A" ? "a" : road[0] === "N" ? "n" : "r";
+  return `<span class="road road-${kind}${country === "IE" ? " ie" : ""}">${esc(road)}</span>`;
+}
+function driveLeg(d, where) {
+  const roads = d.roads ? `<span class="roads">${d.roads.list.map(r => roadSign(r, d.country)).join("")}</span>${d.roads.source === "typical" ? `<small class="roads-src">typical roads, unchecked</small>` : ""}` : "";
+  return `<div class="drive-leg"><span class="dl">Drive ${esc(driveText(d))} ${esc(where)}</span>${roads}</div>`;
+}
 function timesSource(o) {
   if (!o.verified) return ` · <span class="unverified">Timetable unverified</span>`;
   const on = o.verifiedOn ? ` ${esc(niceDate(o.verifiedOn))}` : "";
@@ -214,10 +228,11 @@ export function card(o, { dir, label, compact }) {
     </div>
     <div class="journey-facts"><span class="journey-total-time">Total journey ${duration(o.totalMin)}</span><span class="journey-train-time">${duration(o.crossingMin)} crossing${o.fast ? " · fast ferry" : ""}</span></div>
     ${o.leaveInMin != null ? `<div class="journey-countdown">${esc(countdown(o.leaveInMin))}</div>` : ""}
-    <div class="tags">${label ? `<span class="tag best">${esc(label)}</span>` : ""}<span class="tag">${o.overnight ? "Overnight" : "Daytime"}</span>${o.fast ? `<span class="tag">Fast ferry</span>` : ""}</div>
+    <div class="tags">${label ? `<span class="tag best">${esc(label)}</span>` : ""}<span class="tag">${o.overnight ? "Overnight" : "Daytime"}</span><span class="tag ship-tag">${esc(o.shipType)}</span>${o.sleepMin ? `<span class="tag sleep">Sleep ~${duration(o.sleepMin)} on board</span>` : ""}${o.nightDriveMin ? `<span class="tag night-drive">Driving ${duration(o.nightDriveMin)} between midnight and 5am</span>` : ""}</div>
     <div class="next-svc"><b>Next: ${t(o.dep)} ${esc(o.operator)}</b> from ${esc(o.fromPort)}</div>
     <div class="leg-panel">
       <div class="leg-head">${opBadge(o)} <span>Ferry from ${esc(o.fromPort)} → ${esc(o.toPort)}</span></div>
+      <div class="ship"><b>${esc(o.shipType)}</b>${o.vessel ? ` · ${esc(o.vessel)}` : ""}</div>
       <div class="leg-cols">
         <div><small>Timetable departure</small><span class="legbig">${t(o.dep)}</span></div>
         <div><small>Expected departure</small><span class="legbig muted">Not live</span></div>
@@ -225,7 +240,8 @@ export function card(o, { dir, label, compact }) {
       </div>
       <div class="leg-meta">Check-in closes <b>${t(checkInCloses)}</b> · be there by ${t(o.atPortBy)}${o.vessel ? ` · ${esc(o.vessel)}` : ""}${timesSource(o)}</div>
     </div>
-    <div class="chips"><span class="chip">Drive ${esc(driveText(o.driveTo))} to ${esc(o.fromPort)}</span><span class="chip">Drive ${esc(driveText(o.driveFrom))} from ${esc(o.toPort)}</span></div>
+    ${driveLeg(o.driveTo, `to ${o.fromPort}`)}
+    ${driveLeg(o.driveFrom, `from ${o.toPort}`)}
     <div class="fare">
       ${fareHtml(o)}
       <label>Fare £ <input class="fare-in" inputmode="decimal" data-id="${esc(o.id)}" value="${o.fare && o.fare.source === "entered" ? o.fare.amount : ""}" placeholder="quote" aria-label="Fare for ${esc(o.operator)} ${t(o.dep)}"></label>

@@ -162,19 +162,23 @@
       "sailings": [
         {
           "dep": "01:30",
-          "durMin": 210
+          "durMin": 210,
+          "vessel": "Ulysses"
         },
         {
           "dep": "07:30",
-          "durMin": 210
+          "durMin": 210,
+          "vessel": "James Joyce"
         },
         {
           "dep": "13:15",
-          "durMin": 210
+          "durMin": 210,
+          "vessel": "Ulysses"
         },
         {
           "dep": "19:30",
-          "durMin": 210
+          "durMin": 210,
+          "vessel": "James Joyce"
         }
       ],
       "verified": {
@@ -203,19 +207,23 @@
       "sailings": [
         {
           "dep": "01:15",
-          "durMin": 210
+          "durMin": 210,
+          "vessel": "James Joyce"
         },
         {
           "dep": "07:30",
-          "durMin": 210
+          "durMin": 210,
+          "vessel": "Ulysses"
         },
         {
           "dep": "13:45",
-          "durMin": 210
+          "durMin": 210,
+          "vessel": "James Joyce"
         },
         {
           "dep": "19:45",
-          "durMin": 210
+          "durMin": 210,
+          "vessel": "Ulysses"
         }
       ],
       "verified": {
@@ -317,11 +325,13 @@
             3,
             5,
             6
-          ]
+          ],
+          "vessel": "Isle of Innisfree"
         },
         {
           "dep": "14:45",
-          "durMin": 241
+          "durMin": 241,
+          "vessel": "Isle of Innisfree"
         }
       ],
       "verified": {
@@ -350,7 +360,8 @@
       "sailings": [
         {
           "dep": "08:45",
-          "durMin": 241
+          "durMin": 241,
+          "vessel": "Isle of Innisfree"
         },
         {
           "dep": "20:45",
@@ -362,7 +373,8 @@
             4,
             5,
             6
-          ]
+          ],
+          "vessel": "Isle of Innisfree"
         }
       ],
       "verified": {
@@ -439,5 +451,67 @@
       "reason": "Northern Ireland routes add ~3h of Irish driving to Borris and a much longer UK drive; not competitive."
     }
   ],
-  "bannerNote": "Ferry times checked 3 Nov 2026: Irish Ferries from its own pages, Stena via AFerry. Fast-ferry times unverified. Confirm before booking."
+  "bannerNote": "Ferry times checked 3 Nov 2026: Irish Ferries from its own pages, Stena via AFerry. Fast-ferry times unverified. Confirm before booking.",
+  "shipNote": "Irish Ferries ship names from its sailing-updates pages on 3 Nov 2026; the ship on a given day can change. Stena ship names not yet confirmed.",
+  "typicalRoads": {
+    "_note": "Fallback only, shown as 'typical roads, unchecked' when Google is unavailable. From general knowledge, not measured.",
+    "home>HHD": [
+      "A1(M)",
+      "A14",
+      "M6",
+      "M56",
+      "A55"
+    ],
+    "HHD>home": [
+      "A55",
+      "M56",
+      "M6",
+      "A14",
+      "A1(M)"
+    ],
+    "home>FGD": [
+      "A1(M)",
+      "M25",
+      "M4",
+      "A48",
+      "A40"
+    ],
+    "FGD>home": [
+      "A40",
+      "A48",
+      "M4",
+      "M25",
+      "A1(M)"
+    ],
+    "home>PEM": [
+      "A1(M)",
+      "M25",
+      "M4",
+      "A48",
+      "A477"
+    ],
+    "PEM>home": [
+      "A477",
+      "A48",
+      "M4",
+      "M25",
+      "A1(M)"
+    ],
+    "DUB>dest": [
+      "M50",
+      "M9"
+    ],
+    "dest>DUB": [
+      "M9",
+      "M50"
+    ],
+    "RSL>dest": [
+      "N25",
+      "R729"
+    ],
+    "dest>RSL": [
+      "R729",
+      "N25"
+    ]
+  }
 }

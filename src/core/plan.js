@@ -12,6 +12,23 @@ export const AROUND_WINDOW = { before: 60, after: 180 };
 
 const DAY = 24 * 60;
 
+// Sleep on board (Sam, 4 Nov: "a slightly longer journey with more of it asleep" is better). Only crossing time inside
+// 22:00–07:00 counts, after 20 min to settle and stopping 30 min before arrival (car-deck call). The driver can't sleep
+// while driving, so drive time never counts. Comparisons use 15-minute bands so a minute or two doesn't decide.
+export const SLEEP = { nightStart: 22 * 60, nightEnd: 7 * 60, settleMin: 20, wakeMin: 30, bandMin: 15 };
+
+/** Minutes of the interval [from, to] inside the repeating daily window [startMin, endMin) (may wrap midnight). */
+export function overlapDaily(from, to, startMin, endMin) {
+  if (to <= from) return 0;
+  let total = 0;
+  for (let d = Math.floor(from / DAY) * DAY - DAY; d <= to; d += DAY) {
+    const s = d + startMin, e = startMin < endMin ? d + endMin : d + DAY + endMin;
+    total += Math.max(0, Math.min(to, e) - Math.max(from, s));
+  }
+  return total;
+}
+export function sleepOnBoard(dep, arr) { return overlapDaily(dep + SLEEP.settleMin, arr - SLEEP.wakeMin, SLEEP.nightStart, SLEEP.nightEnd); }
+
 /** "2026-11-20" -> local minutes at 00:00 that day. */
 export function dayStart(dateISO) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateISO);
@@ -95,12 +112,16 @@ export function options(data, { dir, date, dates, drive, fares = {}, typical = n
     const guess = drive(start, r.from, null);
     const toBase = drive(start, r.from, atPortBy - guess.min - toStops);
     const stops = settings.stops || 0;
-    const driveTo = { min: toBase.min + toStops, baseMin: toBase.min, stopsMin: toStops, stops: toStops ? stops : 0, source: toBase.source };
+    const roadsOf = (b, from, to) => (b.roads && b.roads.length ? { list: b.roads, source: "google" }
+      : data.typicalRoads && data.typicalRoads[`${from}>${to}`] ? { list: data.typicalRoads[`${from}>${to}`], source: "typical" } : null);
+    const driveTo = { min: toBase.min + toStops, baseMin: toBase.min, stopsMin: toStops, stops: toStops ? stops : 0, source: toBase.source,
+      roads: roadsOf(toBase, start, r.from), country: data.ports[r.from].country };
     const leave = atPortBy - driveTo.min;
     if (!days.some(d => leave >= d && leave < d + DAY)) continue;
     const offAt = s.arr + settings.disembarkMin;
     const fromBase = drive(r.to, end, offAt);
-    const driveFrom = { min: fromBase.min + fromStops, baseMin: fromBase.min, stopsMin: fromStops, stops: fromStops ? stops : 0, source: fromBase.source };
+    const driveFrom = { min: fromBase.min + fromStops, baseMin: fromBase.min, stopsMin: fromStops, stops: fromStops ? stops : 0, source: fromBase.source,
+      roads: roadsOf(fromBase, r.to, end), country: data.ports[r.to].country };
     const arrive = offAt + driveFrom.min;
     const fare = fares[s.id] || null;
     result.push({
@@ -114,6 +135,7 @@ export function options(data, { dir, date, dates, drive, fares = {}, typical = n
       toPort: data.ports[r.to].name,
       vessel: s.sailing.vessel || null,
       fast: s.fast,
+      shipType: s.fast ? "Fast ferry" : "Standard ferry",
       leave, atPortBy, dep: s.dep, arr: s.arr, offAt, arrive,
       totalMin: arrive - leave,
       crossingMin: s.durMin,
@@ -121,6 +143,9 @@ export function options(data, { dir, date, dates, drive, fares = {}, typical = n
       driveTo, driveFrom,
       overnight: isOvernight(leave, arrive),
       overnightCrossing: isOvernight(s.dep, s.arr),
+      sleepMin: sleepOnBoard(s.dep, s.arr),
+      nightDriveMin: overlapDaily(leave, atPortBy, OVERNIGHT_WINDOW.start, OVERNIGHT_WINDOW.end)
+        + overlapDaily(offAt, arrive, OVERNIGHT_WINDOW.start, OVERNIGHT_WINDOW.end),
       fare,
       verified: !!(data.verified || r.verified),
       verifiedBy: r.verified ? r.verified.by : null,
@@ -144,6 +169,12 @@ export function byPreference(opts, pref) {
   if (pref === "day") return opts.filter(o => !o.overnight);
   if (pref === "overnight") return opts.filter(o => o.overnight);
   return opts.slice();
+}
+
+/** Most sleep on board first (15-min bands), then least driving between 00:00 and 05:00, then shortest door to door. */
+export function rankBySleep(opts) {
+  const band = (o) => Math.floor(o.sleepMin / SLEEP.bandMin);
+  return opts.slice().sort((a, b) => band(b) - band(a) || a.nightDriveMin - b.nightDriveMin || a.totalMin - b.totalMin || a.id.localeCompare(b.id));
 }
 
 export function rankByTime(opts) {
@@ -202,6 +233,7 @@ export function answer(data, { question, dir, nowMin, date, time, pref = "any", 
     label = "Fastest";
   } else throw new Error(`unknown question ${question}`);
   if (nowMin != null) for (const o of list) o.leaveInMin = o.leave - nowMin;
+  if (sort === "sleep") { list = rankBySleep(list); label = list[0]?.sleepMin ? "Most sleep" : label; }
   if (sort === "cost") { list = rankByCost(list); label = list[0]?.fare ? "Cheapest" : list[0]?.typicalFare ? "Cheapest typical price" : label; }
   return { list, best: list[0] || null, next: list[1] || null, label, leastLate, window };
 }

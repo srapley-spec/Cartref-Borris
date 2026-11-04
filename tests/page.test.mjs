@@ -145,7 +145,14 @@ test("Stops move the leave time by minutes-per-stop; fast ferry toggle is explic
 });
 
 test("with a Google key: legs requested with key header and future departure times; results replace estimates", async () => {
-  const { page, ctx, calls } = await openPage({ google: () => ({ status: 200, contentType: "application/json", body: JSON.stringify({ routes: [{ duration: "15600s" }] }) }) });
+  const steps = [
+    { distanceMeters: 2000, navigationInstruction: { instructions: "Head north on Hitchin Rd" } },
+    { distanceMeters: 40000, navigationInstruction: { instructions: "Merge onto A1(M)" } },
+    { distanceMeters: 90000, navigationInstruction: { instructions: "Take the exit onto A14 toward M6" } },
+    { distanceMeters: 5000, navigationInstruction: { instructions: "Turn left onto A505" } },
+    { distanceMeters: 120000, navigationInstruction: { instructions: "Continue onto M6" } },
+  ];
+  const { page, ctx, calls } = await openPage({ google: () => ({ status: 200, contentType: "application/json", body: JSON.stringify({ routes: [{ duration: "15600s", legs: [{ steps }] }] }) }) });
   await page.click("#settingsBtn");
   await page.fill("#key", "test-key-not-real");
   await page.click("#saveSettings");
@@ -155,7 +162,13 @@ test("with a Google key: legs requested with key header and future departure tim
   assert.match(calls[0].headers["x-goog-fieldmask"], /routes\.duration/);
   assert.ok(calls.every(c => Date.parse(c.body.departureTime) > NOW));
   assert.ok(calls.some(c => /SG6 3LT/.test(c.body.origin.address)));
-  assert.match(await page.textContent("#hero .chips"), /Drive 4h 50m incl\. 1 stop \(30 min\) to/);
+  assert.match(await page.textContent("#hero .drive-leg"), /Drive 4h 50m incl\. 1 stop \(30 min\) to/);
+  assert.match(calls[0].headers["x-goog-fieldmask"], /navigationInstruction/);
+  // Main roads (≥15 km) in order of use, as sign lozenges; the 5 km A505 is left out.
+  const leg = page.locator("#hero > .opt .drive-leg").first();
+  assert.deepEqual(await leg.locator(".road").allTextContents(), ["A1(M)", "A14", "M6"]);
+  assert.deepEqual(await leg.locator(".road").evaluateAll(els => els.map(e => e.className)), ["road road-m", "road road-a", "road road-m"]);
+  assert.equal(await leg.locator(".roads-src").count(), 0);
   await ctx.close();
 });
 
@@ -184,5 +197,28 @@ test("Fetched fares: an AFerry quote prices its exact sailing; others show the m
   assert.match(await first.locator(".tag.best").textContent(), /^Cheapest$/);
   const pem = page.locator('.opt[data-id="irish-PEM-RSL|2026-11-10|14:45"]');
   assert.match(await pem.textContent(), /~£180\s*typical, not a quote \(AFerry route average for Nov\)/);
+  await ctx.close();
+});
+
+test("Without Google, each drive shows typical roads (labelled unchecked) in sign colours; ship type and name shown", async () => {
+  const { page, ctx } = await openPage();
+  const best = page.locator("#hero > .opt").first(); // Irish Ferries 19:30 Holyhead (James Joyce)
+  const out = best.locator(".drive-leg").nth(0), irl = best.locator(".drive-leg").nth(1);
+  assert.deepEqual(await out.locator(".road").allTextContents(), ["A1(M)", "A14", "M6", "M56", "A55"]);
+  assert.match(await out.textContent(), /typical roads, unchecked/);
+  assert.deepEqual(await irl.locator(".road").evaluateAll(els => els.map(e => e.className)), ["road road-m ie", "road road-m ie"]);
+  assert.match(await best.locator(".ship").textContent(), /Standard ferry · James Joyce/);
+  assert.match(await best.locator(".tags").textContent(), /Standard ferry/);
+  await ctx.close();
+});
+
+test("Best sleep ranking: most sleep on board first, with sleep and night-driving shown", async () => {
+  const { page, ctx } = await openPage();
+  await seg(page, "questionSeg", "fastest");
+  await page.click("#ctx summary"); await seg(page, "sortSeg", "sleep");
+  const best = page.locator("#hero > .opt").first();
+  assert.match(await best.locator(".tag.best").textContent(), /Most sleep/);
+  assert.match(await best.textContent(), /Sleep ~3h \d\dm on board/);
+  assert.match(await page.textContent("#contextSummary"), /Best sleep/);
   await ctx.close();
 });
