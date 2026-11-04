@@ -18,6 +18,8 @@ Connect it to this repo once and Cloudflare redeploys it automatically on every 
    Leave the build command empty; the deploy command is `npx wrangler deploy` (the default). Production branch: `main`.
    `wrangler.toml` in the repo tells Cloudflare everything else, including `ALLOW_ORIGIN`.
 3. Copy the Worker's `https://….workers.dev` address into the app: Settings → Proxy URL → Save.
+   (Sam's Worker: `https://cartref-borris.s-rapley.workers.dev`.) The app's Data sources section then shows whether the
+   Worker is running the current code; the "Check Worker" GitHub workflow checks the same after every change and daily.
 With it set, the app reads sailing status the moment you open it (and every 5 minutes) and shows live prices for your
 dates. Without it, the app uses the twice-hourly collected status and typical prices, and says so.
 

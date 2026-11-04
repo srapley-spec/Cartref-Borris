@@ -26,6 +26,17 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   try { const r = await fetchFn("data/sailing-status.json"); if (r.ok) datedFile = await r.json(); } catch { /* none yet */ }
   dated = datedFile;
   // With a proxy configured, read the operators' pages now (the collected file can be up to half an hour old or more).
+  // Is the proxy running the same code as this app? (Cloudflare redeploys it from GitHub; a mismatch means stale.)
+  let proxyVersion = null, proxyVersionError = null, WORKER_VERSION = null;
+  const proxyCurrent = () => !!proxyVersion && !!WORKER_VERSION && proxyVersion === WORKER_VERSION;
+  const proxyBehind = () => !!proxyVersion && !!WORKER_VERSION && proxyVersion !== WORKER_VERSION;
+  async function checkProxyVersion() {
+    if (!state.settings.proxyUrl) { proxyVersion = null; return; }
+    // The version the app expects: read as text (not imported) so it works whatever type the host serves .mjs as.
+    if (!WORKER_VERSION) { try { WORKER_VERSION = ((await (await fetchFn("proxy/version.mjs")).text()).match(/WORKER_VERSION = "([0-9a-f]+)"/) || [])[1] || null; } catch { /* unknown */ } }
+    try { const r = await fetchFn(`${state.settings.proxyUrl}/version`); proxyVersion = (await r.json()).version || null; proxyVersionError = null; }
+    catch (e) { proxyVersion = null; proxyVersionError = e.message; }
+  }
   async function fetchLiveStatus(force = false) {
     if (!state.settings.proxyUrl) { datedLive = null; dated = datedFile; return; }
     if (!force && now() - liveStatusAt < LIVE_STATUS_MS) return;
@@ -115,9 +126,14 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
         detail: shipData.updatedOn ? "Which ship ran each Irish Ferries sailing, from its status pages. Refreshed daily." : "Not yet recorded." },
       { key: "status", label: "Sailing status", verb: datedLive ? "read live" : "collected", updatedOn: statusUpdatedAt(),
         detail: statusDetail() },
+      ...(state.settings.proxyUrl ? [{ key: "proxy", label: "Proxy", verb: "checked", optional: true, updatedOn: proxyCurrent() ? new Date(now()).toISOString() : null,
+        detail: proxyCurrent() ? `Running the app's code (${WORKER_VERSION}).`
+          : proxyVersion && !WORKER_VERSION ? `Running ${proxyVersion}; couldn't read the version this app expects.`
+          : proxyVersion ? `Running older code (${proxyVersion}; the app expects ${WORKER_VERSION}). Cloudflare normally redeploys within minutes of a change; if this persists, check the Worker's build in Cloudflare.`
+          : proxyVersionError ? `Not reachable (${proxyVersionError}).` : "Checking…" }] : []),
       { key: "drive", label: "Drive times", verb: "updated", optional: true, updatedOn: state.settings.googleKey && driveAts.length ? driveAts.at(-1) : null,
         detail: state.settings.googleKey ? "Google Routes with traffic for each departure time; kept up to 7 days." : "No Google key: rough estimates without traffic (marked “estimate”)." },
-    ], today);
+    ], today).map(x => x.key === "proxy" ? { ...x, stale: proxyBehind() } : x);
   }
   function statusUpdatedAt() {
     const good = Object.values(dated?.sources || {}).filter(x => x.ok).map(x => x.fetchedAt).filter(Boolean).sort();
@@ -138,8 +154,9 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   function drawSources() {
     const list = sources();
     const bit = (x) => x.key === "drive" && !state.settings.googleKey ? `<span>Drive times: estimates</span>`
+      : x.key === "proxy" ? (proxyBehind() ? `<span class="stale">Proxy running older code</span>` : "")
       : `<span class="${x.stale ? "stale" : ""}">${esc(x.label)} ${x.updatedOn ? `${x.verb} ${x.key === "status" ? esc(clock(x.updatedOn)) + (x.ageDays ? ` (${esc(x.ageText)})` : "") : esc(x.ageText)}` : "never updated"}</span>`;
-    $("#banner").innerHTML = list.map(bit).join(" · ") + (list.some(x => x.stale) ? ` <b class="stale">Check before booking.</b>` : "");
+    $("#banner").innerHTML = list.map(bit).filter(Boolean).join(" · ") + (list.some(x => x.stale) ? ` <b class="stale">Check before booking.</b>` : "");
     $("#sources").innerHTML = `<h3>Data sources</h3>` + list.map(x => `<div class="src-row${x.stale ? " stale" : ""}"><b>${esc(x.label)}</b>
       <span>${x.updatedOn ? `${x.verb} ${esc(niceDate(x.updatedOn.slice(0, 10)))} (${esc(x.ageText)})` : "never updated"}${x.stale ? " · out of date" : ""}</span>
       <small>${esc(x.detail)}</small></div>`).join("");
@@ -271,7 +288,7 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
     });
   }
 
-  function refresh() { draw(); fetchDrives().then(draw); fetchLive().then(draw); fetchLiveStatus().then(draw); }
+  function refresh() { draw(); fetchDrives().then(draw); fetchLive().then(draw); fetchLiveStatus().then(draw); checkProxyVersion().then(draw); }
   refresh();
   setInterval(draw, 30000); // countdowns
   setInterval(() => fetchLiveStatus().then(draw), 60000); // re-reads status every LIVE_STATUS_MS while open

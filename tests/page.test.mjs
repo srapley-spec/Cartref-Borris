@@ -3,6 +3,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { extname, join, normalize } from "node:path";
 import { createRequire } from "node:module";
 // require() so a globally installed Playwright (cloud sessions) and the devDependency (CI) both resolve.
@@ -10,7 +11,7 @@ const { chromium } = createRequire(import.meta.url)("playwright");
 import { localToUtcIso } from "../src/google.js";
 
 const ROOT = new URL("..", import.meta.url).pathname;
-const TYPES = { ".html": "text/html", ".js": "text/javascript", ".json": "application/json" };
+const TYPES = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".json": "application/json", ".png": "image/png" };
 let server, base, browser;
 const NOW = Date.parse("2026-11-03T10:00:00Z");
 
@@ -264,6 +265,7 @@ test("Live prices via the proxy: searches for the date on screen; live prices be
   await page.route("https://proxy.test/**", (route) => {
     const u = new URL(route.request().url());
     if (u.pathname === "/status") return route.fulfill({ status: 502, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ error: "upstream" }) });
+    if (u.pathname === "/version") return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ version: "000000000000" }) });
     asked.push(`${u.pathname}?${u.searchParams}`);
     const rows = u.searchParams.get("route") === "HHD-DUB" && u.searchParams.get("date") === "2026-11-10"
       ? [{ from: "HHD", to: "DUB", dep: "19:30", date: "2026-11-10", arr: "23:00", arrDate: "2026-11-10", durMin: 210, amount: 185 },
@@ -366,4 +368,26 @@ test("Live status via the proxy: operator pages read on open replace the collect
   assert.match(await page.textContent("#sources"), /read live through your proxy[\s\S]*incomplete; older collected data fills in/);
   assert.equal(statusCalls, 1);
   await ctx.close();
+});
+
+test("Proxy version: the app compares the Worker's fingerprint with its own and flags a Worker running older code", async () => {
+  const expected = (readFileSync(new URL("../proxy/version.mjs", import.meta.url), "utf8").match(/WORKER_VERSION = "([0-9a-f]+)"/) || [])[1];
+  assert.match(expected, /^[0-9a-f]{12}$/);
+  for (const [live, stale] of [[expected, false], ["0123456789ab", true]]) {
+    const { page, ctx } = await openPage();
+    await page.route("https://proxy.test/**", (route) => { const u = new URL(route.request().url());
+      if (u.pathname === "/version") return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ version: live }) });
+      return route.fulfill({ status: 502, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ error: "x" }) }); });
+    await page.click("#settingsBtn"); await page.fill("#proxy", "https://proxy.test"); await page.click("#saveSettings");
+    await page.waitForFunction(() => /Proxy/.test(document.querySelector("#sources").textContent) && !/Checking/.test(document.querySelector("#sources").textContent));
+    const row = await page.locator("#sources .src-row", { hasText: "Proxy" }).textContent();
+    if (stale) {
+      assert.match(row, new RegExp(`Running older code \\(0123456789ab; the app expects ${expected}\\)`));
+      assert.match(await page.textContent("#banner"), /Proxy running older code/);
+    } else {
+      assert.match(row, new RegExp(`Running the app's code \\(${expected}\\)`));
+      assert.doesNotMatch(await page.textContent("#banner"), /Proxy/);
+    }
+    await ctx.close();
+  }
 });

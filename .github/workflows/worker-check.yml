@@ -1,0 +1,34 @@
+name: Check Worker
+# Confirms the deployed Cloudflare Worker runs the repo's code and answers with live data.
+# - After a push to main that changes Worker code: waits up to 15 min for Cloudflare's redeploy to report the new
+#   WORKER_VERSION at /version, then checks /status and /prices. A failed run means a stale or broken Worker (GitHub
+#   emails the repo owner).
+# - Daily, to catch the Worker or its sources breaking without a code change.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "proxy/**"
+      - "tools/aferry-search.mjs"
+      - "tools/status-core.mjs"
+      - "tools/irish-status-parse.mjs"
+      - "tools/stena-status-parse.mjs"
+      - "tools/aferry-parse.mjs"
+      - "wrangler.toml"
+      - "tools/check-worker.mjs"
+      - ".github/workflows/worker-check.yml"
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+env:
+  WORKER_URL: https://cartref-borris.s-rapley.workers.dev
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/check-worker.mjs

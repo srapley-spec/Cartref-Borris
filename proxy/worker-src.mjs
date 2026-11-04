@@ -1,6 +1,7 @@
 // Cloudflare Worker for Cartref Borris (source; `node tools/build-worker.mjs` writes the paste-ready proxy/worker.js).
 // GET /prices?route=HHD-DUB&date=2026-11-20&time=0600  -> live AFerry prices (car + 2 adults, one way), cached 1 hour.
 // GET /status  -> the operators' sailing status read now (same shape as data/sailing-status.json), cached 3 minutes.
+// GET /version -> { version } fingerprint of this code (proxy/version.mjs), so a stale deployment can be detected.
 // Only fixed upstream hosts; only requests from ALLOW_ORIGIN (e.g. https://srapley-spec.github.io).
 //
 // Setup (Cloudflare dashboard → Workers & Pages → Create → Worker → paste proxy/worker.js):
@@ -8,6 +9,7 @@
 //   Then in the app: Settings → Proxy URL = the worker's https://… address.
 import { ROUTES, searchAferry } from "../tools/aferry-search.mjs";
 import { collect } from "../tools/status-core.mjs";
+import { WORKER_VERSION } from "./version.mjs";
 
 const PRICE_TTL_S = 3600;
 const STATUS_TTL_S = 180;
@@ -22,6 +24,11 @@ export function validPricesQuery(q, todayISO) {
 
 export async function handle(request, env, { fetchFn = fetch, cache = null, sleep, now = () => Date.now() } = {}) {
   const origin = request.headers.get("Origin") || "";
+  // /version reveals nothing but the code fingerprint, so monitoring can call it without an Origin.
+  if (new URL(request.url).pathname === "/version") {
+    const allowedV = String(env.ALLOW_ORIGIN || "").split(",").map(s => s.trim()).includes(origin);
+    return new Response(JSON.stringify({ version: WORKER_VERSION, configured: !!env.ALLOW_ORIGIN }), { headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...(allowedV ? { "Access-Control-Allow-Origin": origin, Vary: "Origin" } : {}) } });
+  }
   const allowed = String(env.ALLOW_ORIGIN || "").split(",").map(s => s.trim()).filter(Boolean);
   if (!allowed.length) return new Response("Proxy not configured: set ALLOW_ORIGIN.", { status: 500 });
   if (!allowed.includes(origin)) return new Response("Forbidden", { status: 403 });

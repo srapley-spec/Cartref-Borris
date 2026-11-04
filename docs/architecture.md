@@ -15,6 +15,51 @@ cost, filtered on request to day or overnight travel.
 | Page | `src/app.js`, `index.html` | Signal layout (from Cartref Commute), questions, settings, fares entry, drive-time fetch + cache, drawing |
 | Ships seen | `data/ships.json`, written daily by `tools/fetch-fares.mjs` | Ship per Irish Ferries sailing time; Dublin Swift last seen |
 | Fares | `data/fares.json`, written daily by `tools/fetch-fares.mjs` (GitHub Action `fares.yml`) | AFerry dated quotes, monthly and operator averages; see [fares story](stories/fares.md) |
+| Proxy (Cloudflare Worker) | `proxy/worker-src.mjs` + `tools/aferry-search.mjs`, `tools/status-core.mjs` and parsers; `wrangler.toml` | Live AFerry prices (`/prices`), live operator status (`/status`), code fingerprint (`/version`); see [Proxy](#proxy-cloudflare-worker-deployment-and-verification) |
+
+## Runtime topology
+```
+ Phone (GitHub Pages: index.html, src/, data/*.json)
+   │ same origin: data/sailing-status.json, fares.json, ships.json, sailings.json, proxy/version.mjs
+   │ Google Routes API (key in phone Settings)
+   └─▶ Proxy: https://cartref-borris.s-rapley.workers.dev  (only for Origin https://srapley-spec.github.io)
+         /status  ─▶ Stena FerryCheck ×4, Irish Ferries sailing updates ×2   (cached 3 min)
+         /prices  ─▶ AFerry search (2 requests + polls per search)          (cached 1 h)
+         /version ─▶ WORKER_VERSION (no upstream)
+ GitHub Actions (repo srapley-spec/Cartref-Borris)
+   Tests (every push) · status.yml (:09/:39, collected status file) · fares.yml (daily) · worker-check.yml (see below)
+   Bot commits to main redeploy Pages; Worker-relevant commits redeploy the Worker via Cloudflare Workers Builds.
+```
+
+## Proxy (Cloudflare Worker): deployment and verification
+**Where it runs.** `https://cartref-borris.s-rapley.workers.dev` (Sam's Cloudflare account). Sam enters it in the app's
+Settings → Proxy URL (stored on the phone; the app has no default). Without it the app falls back to the collected
+status file and typical prices, and says so.
+
+**How it is deployed.** The Worker is connected to this GitHub repo in Cloudflare (Workers Builds). Cloudflare runs
+`npx wrangler deploy` on every push to `main`; `wrangler.toml` names the entry (`proxy/worker-src.mjs`, imports bundled
+by wrangler) and the only setting, `ALLOW_ORIGIN` (not secret). Nothing is pasted by hand. `proxy/worker.js` remains as
+a single-file bundle for a hand-made Worker only.
+
+**How we know it isn't stale.**
+1. `proxy/version.mjs` holds `WORKER_VERSION`, a SHA-256 fingerprint (12 hex) of the Worker's source: `worker-src.mjs`
+   and every module it imports. `node tools/build-worker.mjs` regenerates it; `tests/worker-version.test.mjs` and the
+   `--check` test fail if it doesn't match the source, so a code change can't be merged with an old fingerprint.
+2. The Worker reports it at `GET /version` (no Origin needed, `no-store`).
+3. **Check Worker** (`.github/workflows/worker-check.yml`, `tools/check-worker.mjs`) runs after every push to `main` that
+   touches Worker code, and daily at 06:17 UTC. It polls `/version` for up to 15 minutes until it equals the repo's
+   fingerprint (Cloudflare normally redeploys in 1–2 minutes), then checks `/status` returns operator sailings and
+   `/prices` returns AFerry prices for a date two weeks out. Any failure fails the run, and GitHub emails the repo owner.
+4. The app reads the expected fingerprint (as text, from `proxy/version.mjs` on Pages) and the Worker's `/version`;
+   Data sources shows "Proxy: running the app's code (…)" or, in amber, "Proxy running older code".
+
+**After changing Worker code (for whoever edits it).** Run `node tools/build-worker.mjs` (updates the fingerprint and the
+paste bundle) and `npx wrangler deploy --dry-run` (proves Cloudflare can build it); `npm test`; push to `main`; watch
+the Check Worker run go green. A red run means Cloudflare didn't deploy (check the Worker's Builds tab in Cloudflare)
+or the Worker can't reach a source.
+
+**Limits.** Free Cloudflare plan: 100,000 requests/day, ample (each app open is ≈2–7 Worker requests). Worker caches are
+per Cloudflare location. Upstream terms for automated reading are not confirmed; the Worker identifies itself.
 
 ## Option model
 For a sailing departing `dep` with crossing `durMin` and operator check-in `checkInMin`:
@@ -109,6 +154,12 @@ planner uses; outside it the timetable pattern below is a labelled estimate. See
 - **4 Nov 2026** Worker deploys from the repo (Sam: "connect to GitHub so we can update things in one go"):
   `wrangler.toml` (main `proxy/worker-src.mjs`, `ALLOW_ORIGIN` as a plain var). Sam connects the repo once in Cloudflare;
   pushes to `main` then redeploy it. Validated with `wrangler deploy --dry-run` (24 KB bundle, responds correctly).
+
+- **4 Nov 2026** Proxy URL `cartref-borris.s-rapley.workers.dev` connected to the repo by Sam. Stale-code protection:
+  source fingerprint (`proxy/version.mjs`) reported at `/version`, enforced by tests, verified after each deploy and
+  daily by the Check Worker workflow, and shown in the app. First direct check from a cloud session (with the host
+  allowed): `/status` 6/6 sources, 72 records in 2.7 s; `/prices` 8 live rows; other origins refused (403);
+  `/version` absent, i.e. running the pre-fingerprint code, as expected before this change was pushed.
 
 ## Known gaps / next
 1. Timetable pattern (future dates): confirm Stena's pattern from Stena; fix day-of-week patterns using `unscheduled` from the collector.

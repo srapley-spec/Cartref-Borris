@@ -41,6 +41,10 @@ Settings (localStorage) and, for verification in cloud sessions, the environment
   repo connected in Cloudflare (Workers Builds), every push to `main` redeploys the Worker. Check a change builds with
   `npx wrangler deploy --dry-run`. `proxy/worker.js` is a paste-ready bundle for a hand-made Worker only
   (`node tools/build-worker.mjs`; a test fails if it's stale).
+- Stale-code protection: `node tools/build-worker.mjs` also writes `proxy/version.mjs` (fingerprint of the Worker source;
+  tests fail if it's out of date). The live Worker reports it at `/version`; the "Check Worker" workflow confirms the
+  deployed fingerprint matches after each Worker-code push to `main` and daily. After merging Worker changes, check that
+  run is green before telling Sam it's done. Live URL: https://cartref-borris.s-rapley.workers.dev
 - Identify honestly (`UA` in `tools/aferry-search.mjs`); never disguise the client or work around a site's bot checks.
 
 ## Build, test, release
