@@ -12,7 +12,7 @@ cost, filtered on request to day or overnight travel.
 | Engine (pure) | `src/core/plan.js` | Builds options, overnight classification, filtering, ranking, round-trip summary |
 | Adapter | `src/google.js` | Google Routes API `computeRoutes` from the browser (traffic-aware, future departure time) |
 | Page | `src/app.js`, `index.html` | Signal layout (from Cartref Commute), questions, settings, fares entry, drive-time fetch + cache, drawing |
-| Fares cache | `data/fares.json` (optional, not yet produced) | Fares fetched by a future server-side job |
+| Fares | `data/fares.json`, written daily by `tools/fetch-fares.mjs` (GitHub Action `fares.yml`) | AFerry dated quotes, monthly and operator averages; see [fares story](stories/fares.md) |
 
 ## Option model
 For a sailing departing `dep` with crossing `durMin` and operator check-in `checkInMin`:
@@ -36,7 +36,8 @@ For a sailing departing `dep` with crossing `durMin` and operator check-in `chec
   ship, status. AFerry: readable, per-date departure list, average car fare per operator/route; per-sailing prices
   load in a JS micro-frontend (not yet investigated). Direct Ferries: Cloudflare 403. Ferryhopper/Ferryscanner:
   prose only. Stena: homepage "from" price only.
-- **Typical fares:** AFerry's average car single per operator and route, shown as "typical", never ranked on.
+- **Fares:** AFerry dated quotes (per sailing) and monthly/operator averages, harvested daily; quotes rank first, typical
+  prices order the unquoted options, both labelled. Live any-date prices need a booking engine: not built (Sam to decide).
 - **Excluded:** Liverpool–Dublin (P&O may have ended it Dec 2023; conflicting evidence), Cairnryan–Belfast/Larne
   (not competitive for south Carlow).
 - **Drive times:** Google Routes API when a key is in Settings (cached per leg per 30-minute departure bucket in
@@ -59,10 +60,13 @@ For a sailing departing `dep` with crossing `durMin` and operator check-in `chec
 - **3 Nov 2026** Fast ferry modelled as Dublin Swift only, seasonal, off by default; times from memory (low confidence).
 - **3 Nov 2026** A Google key was pasted into chat. It was not used or stored (project rule); Sam asked to regenerate it.
 
+- **4 Nov 2026** Fares from AFerry public route pages, daily (Sam: "we do need prices"). Typical (average) prices may
+  order unquoted options in Cheapest, labelled as typical; this refines the earlier "never ranked on".
+
 ## Known gaps / next
 1. Confirm Stena times from Stena itself and the day-of-week patterns; re-run the probe when timetables change.
 2. Measure the fallback drive estimates with Google (needs `GOOGLE_MAPS_KEY` in the environment).
-3. Per-sailing fares: investigate AFerry's timetable micro-frontend data, then a scheduled job → `data/fares.json`; return-fare vs two-singles pricing; cabin costs on overnight sailings.
+3. Live any-date fares (booking-engine automation) only if Sam agrees; return-fare vs two-singles pricing; cabin costs on overnight sailings.
 4. Booking links go to operator home pages; deep links with dates are unverified.
 5. Verify whether Dublin Swift runs in 2026 and its times; add Stena fast craft if any.
 6. Without a Google key, Fastest cannot see traffic and several options tie.

@@ -78,14 +78,24 @@ test("rank by time: shortest door to door first", () => {
   for (let i = 1; i < r.length; i++) assert.ok(r[i - 1].totalMin <= r[i].totalMin);
 });
 
-test("rank by cost: priced cheapest first, unpriced kept after (never hidden)", () => {
-  const all = options(data, { dir: "out", date: "2026-11-20", drive: est, settings });
-  const fares = { [all[0].id]: { amount: 210 }, [all[1].id]: { amount: 140 } };
-  const r = rankByCost(options(data, { dir: "out", date: "2026-11-20", drive: est, fares, settings }));
+test("rank by cost: real prices first (cheapest), then typical prices (cheapest), then unpriced by time; none dropped", () => {
+  const typ = { "PEM-RSL": 150, "HHD-DUB": 170 };
+  const typical = (rk) => (typ[rk] ? { amount: typ[rk], basis: "test" } : null);
+  const noStatic = { ...data, routes: data.routes.map(r => ({ ...r, typicalFare: undefined })) };
+  const all = options(noStatic, { dir: "out", date: "2026-11-20", drive: est, settings });
+  const hhd = all.find(o => o.id.startsWith("irish-HHD-DUB")), fgd = all.find(o => o.id.startsWith("stena-FGD-RSL"));
+  const fares = { [hhd.id]: { amount: 210 }, [fgd.id]: { amount: 140 } };
+  const r = rankByCost(options(noStatic, { dir: "out", date: "2026-11-20", drive: est, fares, typical, settings }));
   assert.equal(r.length, all.length);
-  assert.equal(r[0].id, all[1].id); assert.equal(r[1].id, all[0].id);
-  assert.ok(r.slice(2).every(o => !o.fare));
-  for (let i = 3; i < r.length; i++) assert.ok(r[i - 1].totalMin <= r[i].totalMin);
+  assert.deepEqual(r.slice(0, 2).map(o => o.id), [fgd.id, hhd.id]);           // tier 1: real prices
+  const tiers = r.map(o => (o.fare ? 0 : o.typicalFare ? 1 : 2));
+  for (let i = 1; i < tiers.length; i++) assert.ok(tiers[i - 1] <= tiers[i]);
+  const t1 = r.filter(o => !o.fare && o.typicalFare);
+  assert.ok(t1.length && t1[0].typicalFare.amount === 150);                  // Pembroke typical before Holyhead
+  for (let i = 1; i < t1.length; i++) assert.ok(t1[i - 1].typicalFare.amount <= t1[i].typicalFare.amount);
+  const t2 = r.filter(o => !o.fare && !o.typicalFare);                        // Fishguard (no typical) by time
+  assert.ok(t2.length);
+  for (let i = 1; i < t2.length; i++) assert.ok(t2[i - 1].totalMin <= t2[i].totalMin);
 });
 
 test("Google drive time replaces the estimate and is requested at the right departure time", () => {
@@ -197,6 +207,8 @@ test("Cheapest within a question re-ranks the eligible set by price, keeps unpri
   const fares = { [base.list[4].id]: { amount: 120 } };
   const a = answer(data, { question: "fastest", dir: "out", date: "2026-11-20", sort: "cost", drive: est, fares, settings });
   assert.equal(a.best.id, base.list[4].id); assert.equal(a.label, "Cheapest");
+  const none = answer(data, { question: "fastest", dir: "out", date: "2026-11-20", sort: "cost", drive: est, settings });
+  assert.equal(none.label, "Cheapest typical price"); // no quotes: best is ordered by typical price, and says so
   assert.equal(a.list.length, base.list.length);
 });
 

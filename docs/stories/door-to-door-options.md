@@ -25,7 +25,7 @@ the drives either side and the price, is hard to do by hand.
    → "round-trip summary…"
 8. Every option says where its times came from: checked with the operator, via AFerry, or unverified (fast ferry);
    unconfirmed day patterns are flagged; the banner summarises. Typical fares (AFerry averages) are shown but never
-   ranked on. → "timetable provenance flags…", "Irish Ferries Dublin→Holyhead matches…", page "Leave now (default)…"
+   ranked on (superseded 4 Nov by [fares](fares.md): typical prices order unquoted options). → "timetable provenance flags…", "Irish Ferries Dublin→Holyhead matches…", page "Leave now (default)…"
 
 ## Status
 Built 3 Nov 2026. Timetable checked 3 Nov (see architecture); drive estimates **unmeasured**; live fares not yet fetched (see architecture

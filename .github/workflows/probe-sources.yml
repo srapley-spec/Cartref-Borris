@@ -19,7 +19,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node tools/${{ inputs.script || 'probe-sources' }}.mjs
+      - name: Run probe
         env:
+          PROBE: ${{ inputs.script }}
           PROBE_URLS: ${{ inputs.urls }}
           AFERRY_PAGE: ${{ inputs.urls }}
+        run: |
+          case "$PROBE" in
+            probe-aferry) node tools/probe-aferry.mjs ;;
+            ""|probe-sources) node tools/probe-sources.mjs ;;
+            *) echo "unknown probe: $PROBE"; exit 1 ;;
+          esac

@@ -1,0 +1,29 @@
+name: Fetch fares
+# Once a day: read the six public AFerry route pages and commit data/fares.json if it changed.
+on:
+  schedule:
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: fares
+  cancel-in-progress: false
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/fetch-fares.mjs
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- data/fares.json; then echo "No change"; exit 0; fi
+          git config user.name "cartref-borris fares bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/fares.json
+          git commit -m "Update fares from AFerry ($(date -u +%F))" -m "Docs: none — scheduled data refresh."
+          git push

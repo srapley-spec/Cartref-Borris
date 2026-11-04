@@ -104,7 +104,8 @@
         "amount": 174,
         "currency": "GBP",
         "source": "AFerry average, car single",
-        "on": "2026-11-03"
+        "on": "2026-11-03",
+        "basis": "operator average, 3 Nov"
       }
     },
     {
@@ -145,7 +146,8 @@
         "amount": 176,
         "currency": "GBP",
         "source": "AFerry average, car single",
-        "on": "2026-11-03"
+        "on": "2026-11-03",
+        "basis": "operator average, 3 Nov"
       }
     },
     {
@@ -184,7 +186,8 @@
         "amount": 163,
         "currency": "GBP",
         "source": "AFerry average, car single",
-        "on": "2026-11-03"
+        "on": "2026-11-03",
+        "basis": "operator average, 3 Nov"
       }
     },
     {
@@ -224,7 +227,8 @@
         "amount": 143,
         "currency": "GBP",
         "source": "AFerry average, car single",
-        "on": "2026-11-03"
+        "on": "2026-11-03",
+        "basis": "operator average, 3 Nov"
       }
     },
     {
@@ -256,7 +260,8 @@
         "amount": 176,
         "currency": "GBP",
         "source": "AFerry average, car single",
-        "on": "2026-11-03"
+        "on": "2026-11-03",
+        "basis": "operator average, 3 Nov"
       }
     },
     {
@@ -288,7 +293,8 @@
         "amount": 200,
         "currency": "GBP",
         "source": "AFerry average, car single",
-        "on": "2026-11-03"
+        "on": "2026-11-03",
+        "basis": "operator average, 3 Nov"
       }
     },
     {
@@ -327,7 +333,8 @@
         "amount": 171,
         "currency": "GBP",
         "source": "AFerry average, car single",
-        "on": "2026-11-03"
+        "on": "2026-11-03",
+        "basis": "operator average, 3 Nov"
       }
     },
     {
@@ -367,7 +374,8 @@
         "amount": 169,
         "currency": "GBP",
         "source": "AFerry average, car single",
-        "on": "2026-11-03"
+        "on": "2026-11-03",
+        "basis": "operator average, 3 Nov"
       }
     },
     {

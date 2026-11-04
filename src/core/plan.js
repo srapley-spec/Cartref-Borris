@@ -76,8 +76,10 @@ export function sailingsOn(data, dir, dates, { fastFerry = false } = {}) {
  * drive(fromKey, toKey, departMin) -> { min, source } is injected (Google, cache or estimate).
  * fares: { [sailingId]: { amount, currency, source } }.
  * settings: { marginMin, disembarkMin, stops, stopMin, fastFerry }. Stops apply to the long UK drive.
+ * typical(routeKey "PEM-RSL", operatorKey, sailDateISO) -> { amount, basis } | null: injected average price (shown,
+ * and used only to order options that have no quote; never presented as a quote).
  */
-export function options(data, { dir, date, dates, drive, fares = {}, settings }) {
+export function options(data, { dir, date, dates, drive, fares = {}, typical = null, settings }) {
   const leaveDates = dates || [date];
   const start = dir === "out" ? "home" : "dest", end = dir === "out" ? "dest" : "home";
   const stopTotal = (settings.stops || 0) * (settings.stopMin || 0);
@@ -123,7 +125,7 @@ export function options(data, { dir, date, dates, drive, fares = {}, settings })
       verified: !!(data.verified || r.verified),
       verifiedBy: r.verified ? r.verified.by : null,
       verifiedOn: r.verified ? r.verified.on : null,
-      typicalFare: r.typicalFare || null,
+      typicalFare: (typical && typical(`${r.from}-${r.to}`, r.operator, fmt(s.dep).date)) || r.typicalFare || null,
       flags: [
         ...(data.verified || r.verified ? [] : ["timetable unverified"]),
         ...(r.verified && r.verified.by === "aggregator" ? ["times via AFerry, not the operator"] : []),
@@ -148,12 +150,18 @@ export function rankByTime(opts) {
   return opts.slice().sort((a, b) => a.totalMin - b.totalMin || a.arrive - b.arrive || a.id.localeCompare(b.id));
 }
 
-/** Priced options first, cheapest first; unpriced follow (by time), never dropped. */
+/**
+ * Cost ranking in three tiers, nothing dropped: (1) a real price (entered or a fetched quote for that sailing),
+ * cheapest first; (2) no quote but a typical (average) price, cheapest typical first; (3) no price, by time.
+ */
+export function costTier(o) { return o.fare ? 0 : o.typicalFare ? 1 : 2; }
 export function rankByCost(opts) {
   return opts.slice().sort((a, b) => {
-    if (!!a.fare !== !!b.fare) return a.fare ? -1 : 1;
-    if (a.fare && b.fare && a.fare.amount !== b.fare.amount) return a.fare.amount - b.fare.amount;
-    return a.totalMin - b.totalMin || a.id.localeCompare(b.id);
+    const ta = costTier(a), tb = costTier(b);
+    if (ta !== tb) return ta - tb;
+    const pa = ta === 0 ? a.fare.amount : ta === 1 ? a.typicalFare.amount : 0;
+    const pb = tb === 0 ? b.fare.amount : tb === 1 ? b.typicalFare.amount : 0;
+    return pa - pb || a.totalMin - b.totalMin || a.id.localeCompare(b.id);
   });
 }
 
@@ -169,9 +177,9 @@ const byLatestLeave = (a, b) => b.leave - a.leave || a.arrive - b.arrive || a.id
  * sort "cost" re-ranks the eligible set by price (priced first); nothing eligible is dropped.
  * Returns { list, best, next, label, leastLate, window }.
  */
-export function answer(data, { question, dir, nowMin, date, time, pref = "any", sort = "time", drive, fares, settings }) {
+export function answer(data, { question, dir, nowMin, date, time, pref = "any", sort = "time", drive, fares, typical, settings }) {
   let list, label, leastLate = false, window = null;
-  const make = (dates) => byPreference(options(data, { dir, dates, drive, fares, settings }), pref);
+  const make = (dates) => byPreference(options(data, { dir, dates, drive, fares, typical, settings }), pref);
   if (question === "now") {
     const today = fmt(nowMin).date;
     list = make([today, addDays(today, 1)]).filter(o => o.leave >= nowMin).sort(byArrival);
@@ -194,7 +202,7 @@ export function answer(data, { question, dir, nowMin, date, time, pref = "any", 
     label = "Fastest";
   } else throw new Error(`unknown question ${question}`);
   if (nowMin != null) for (const o of list) o.leaveInMin = o.leave - nowMin;
-  if (sort === "cost") { list = rankByCost(list); label = list[0]?.fare ? "Cheapest" : label; }
+  if (sort === "cost") { list = rankByCost(list); label = list[0]?.fare ? "Cheapest" : list[0]?.typicalFare ? "Cheapest typical price" : label; }
   return { list, best: list[0] || null, next: list[1] || null, label, leastLate, window };
 }
 

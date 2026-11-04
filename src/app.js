@@ -13,8 +13,16 @@ const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;
 
 export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   const data = await (await fetchFn("data/sailings.json")).json();
-  let cachedFares = {};
-  try { const r = await fetchFn("data/fares.json"); if (r.ok) cachedFares = (await r.json()).fares || {}; } catch { /* none yet */ }
+  let fareData = { quotes: {}, routes: {} };
+  try { const r = await fetchFn("data/fares.json"); if (r.ok) fareData = { quotes: {}, routes: {}, ...(await r.json()) }; } catch { /* none yet */ }
+  // Typical price for a sailing: AFerry's 12-month average for that route and month, else its operator average.
+  const typical = (routeKey, op, dateISO) => {
+    const rt = fareData.routes[routeKey]; if (!rt) return null;
+    const m = rt.monthly?.[+dateISO.slice(5, 7)];
+    if (m) return { amount: m.amount, basis: `route average for ${MONTHS[+dateISO.slice(5, 7) - 1]}`, seenOn: rt.fetchedOn };
+    const a = rt.operatorAvg?.[op];
+    return a ? { amount: a.amount, basis: "operator average", seenOn: rt.fetchedOn } : null;
+  };
 
   const state = { settings: load(LS.settings, DEFAULTS), entered: load(LS.fares, {}), driveCache: load(LS.drive, {}), googleError: null, fetching: 0 };
   const nowMin = () => utcMsToLocalMin(now());
@@ -68,7 +76,7 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   // ---- data plumbing
   const allFares = () => {
     const f = {};
-    for (const [id, v] of Object.entries(cachedFares)) f[id] = { ...v, source: "fetched" };
+    for (const [id, v] of Object.entries(fareData.quotes)) f[id] = { ...v, source: "fetched" };
     for (const [id, v] of Object.entries(state.entered)) f[id] = { ...v, source: "entered" };
     return f;
   };
@@ -79,11 +87,11 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   function question(dir, drive, extra = {}) {
     const date = dir === "out" ? form.out : (form.back || form.out);
     return answer(data, { question: form.question, dir, nowMin: nowMin(), date, time: dir === "out" ? form.outTime : form.backTime,
-      pref: form[dir === "out" ? "outPref" : "backPref"], sort: form.sort, drive, fares: allFares(), settings: state.settings, ...extra });
+      pref: form[dir === "out" ? "outPref" : "backPref"], sort: form.sort, drive, fares: allFares(), typical, settings: state.settings, ...extra });
   }
   function roundTrip(drive) {
     if (!form.back) return null;
-    const mk = (dir, date, pref) => byPreference(options(data, { dir, date, drive, fares: allFares(), settings: state.settings }), pref);
+    const mk = (dir, date, pref) => byPreference(options(data, { dir, date, drive, fares: allFares(), typical, settings: state.settings }), pref);
     return summary(mk("out", form.out, form.outPref), mk("back", form.back, form.backPref));
   }
 
@@ -169,6 +177,13 @@ const money = (f) => `£${f.amount.toFixed(f.amount % 1 ? 2 : 0)}`;
 function opBadge(o) {
   return o.logo ? `<span class="op"><img src="${esc(o.logo)}" alt="${esc(o.operator)}" height="28"></span>` : `<span class="op op-text">${esc(o.operator)}</span>`;
 }
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function fareHtml(o) {
+  if (o.fare && o.fare.source === "entered") return `<span class="price">${money(o.fare)}</span><span class="src">you entered</span>`;
+  if (o.fare) return `<span class="price">${money(o.fare)}</span><span class="src">AFerry price for this sailing, seen ${esc(niceDate(o.fare.seenOn || o.fare.date))}</span>`;
+  if (o.typicalFare) return `<span class="price typical">~£${o.typicalFare.amount}</span><span class="src">typical, not a quote (AFerry ${esc(o.typicalFare.basis || "average")})</span>`;
+  return `<span class="src">No price yet</span>`;
+}
 function timesSource(o) {
   if (!o.verified) return ` · <span class="unverified">Timetable unverified</span>`;
   const on = o.verifiedOn ? ` ${esc(niceDate(o.verifiedOn))}` : "";
@@ -212,7 +227,7 @@ export function card(o, { dir, label, compact }) {
     </div>
     <div class="chips"><span class="chip">Drive ${esc(driveText(o.driveTo))} to ${esc(o.fromPort)}</span><span class="chip">Drive ${esc(driveText(o.driveFrom))} from ${esc(o.toPort)}</span></div>
     <div class="fare">
-      ${o.fare ? `<span class="price">${money(o.fare)}</span><span class="src">${o.fare.source === "entered" ? "you entered" : "fetched"}</span>` : (o.typicalFare ? `<span class="src">No quote yet · typical £${o.typicalFare.amount} (AFerry average)</span>` : `<span class="src">No price yet</span>`)}
+      ${fareHtml(o)}
       <label>Fare £ <input class="fare-in" inputmode="decimal" data-id="${esc(o.id)}" value="${o.fare && o.fare.source === "entered" ? o.fare.amount : ""}" placeholder="quote" aria-label="Fare for ${esc(o.operator)} ${t(o.dep)}"></label>
     </div>
     <div class="actions">

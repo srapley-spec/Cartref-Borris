@@ -27,7 +27,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); server?.close(); });
 
-async function openPage({ google } = {}) {
+async function openPage({ google, fares } = {}) {
   const ctx = await browser.newContext({ timezoneId: "Europe/London" });
   const page = await ctx.newPage();
   page.on("pageerror", e => console.error("pageerror:", e.message));
@@ -38,6 +38,8 @@ async function openPage({ google } = {}) {
     calls.push({ headers: req.headers(), body: JSON.parse(req.postData()) });
     await route.fulfill(google ? google(calls.at(-1)) : { status: 500, body: "no" });
   });
+  // data/fares.json is refreshed daily by a bot; tests never read the live file.
+  await page.route("**/data/fares.json", (route) => route.fulfill(fares ? { status: 200, contentType: "application/json", body: JSON.stringify(fares) } : { status: 404, body: "" }));
   await page.goto(base);
   await page.waitForSelector("#hero .opt");
   return { page, ctx, calls };
@@ -70,7 +72,7 @@ test("Leave now (default): Signal card with Leave by → At Borris, Total journe
   assert.match(await page.textContent("#hero .next-best"), /Next best[\s\S]*Leave by/);
   assert.match(await page.textContent("#banner"), /checked 3 Nov 2026: Irish Ferries from its own pages, Stena via AFerry/);
   assert.match(text, /Times checked with Irish Ferries Tue 3 Nov/);
-  assert.match(text, /No quote yet · typical £163 \(AFerry average\)/);
+  assert.match(text, /~£163\s*typical, not a quote \(AFerry operator average, 3 Nov\)/);
   assert.match(await page.textContent("#status"), /No Google key/);
   await ctx.close();
 });
@@ -164,5 +166,23 @@ test("Google failure is reported and estimates are used (nothing hidden)", async
   await page.waitForFunction(() => /failed/.test(document.querySelector("#status").textContent));
   assert.match(await page.textContent("#status"), /403/);
   assert.equal((await ids(page)).length, before);
+  await ctx.close();
+});
+
+test("Fetched fares: an AFerry quote prices its exact sailing; others show the month's route average; Cheapest ranks quotes first", async () => {
+  const fares = {
+    fetchedOn: "2026-11-03",
+    routes: { "PEM-RSL": { fetchedOn: "2026-11-03", monthly: { 11: { amount: 180, season: "Mid-Season" } }, operatorAvg: { irish: { amount: 172 } } } },
+    quotes: { "irish-HHD-DUB|2026-11-10|19:30": { amount: 99, currency: "GBP", date: "2026-11-10", seenOn: "2026-11-03", source: "AFerry latest ticket price" } },
+  };
+  const { page, ctx } = await openPage({ fares });
+  await seg(page, "questionSeg", "fastest");
+  await page.click("#ctx summary"); await seg(page, "sortSeg", "cost");
+  const first = page.locator("#hero > .opt").first();
+  assert.equal(await first.getAttribute("data-id"), "irish-HHD-DUB|2026-11-10|19:30");
+  assert.match(await first.textContent(), /£99\s*AFerry price for this sailing, seen Tue 3 Nov/);
+  assert.match(await first.locator(".tag.best").textContent(), /^Cheapest$/);
+  const pem = page.locator('.opt[data-id="irish-PEM-RSL|2026-11-10|14:45"]');
+  assert.match(await pem.textContent(), /~£180\s*typical, not a quote \(AFerry route average for Nov\)/);
   await ctx.close();
 });
