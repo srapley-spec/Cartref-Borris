@@ -32,6 +32,12 @@ const priceAttrs = uniq(page.body.match(/data-[a-z-]*(?:price|fare|amount)[a-z-]
 console.log(`\nprice data-attributes: ${priceAttrs.slice(0, 20).join(" ")}`);
 const pounds = page.body.match(/£\s?\d{2,4}/g) || [];
 console.log(`£ amounts in HTML: ${pounds.length}: ${uniq(pounds).slice(0, 30).join(" ")}`);
+// What surrounds each price (text only): is it a dated quote, an average, a marketing line?
+const txt = page.body.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " | ").replace(/&nbsp;|&#160;/g, " ").replace(/(\s*\|\s*)+/g, " | ");
+let n = 0;
+for (const m of txt.matchAll(/£\s?\d{2,4}/g)) { if (n++ >= 40) break; console.log(`  £ctx: ${txt.slice(Math.max(0, m.index - 160), m.index + 60).trim()}`); }
+// Section headings near prices
+for (const h of page.body.matchAll(/<h[1-4][^>]*>([\s\S]{0,120}?)<\/h[1-4]>/gi)) { const t = h[1].replace(/<[^>]+>/g, "").trim(); if (/price|fare|latest|cheap|deal/i.test(t)) console.log(`  heading: ${t}`); }
 
 // 3. Micro-frontend bundles: find endpoints
 const scripts = uniq([...page.body.matchAll(/(?:src|href)="([^"]*\/mfe\/[^"]+\.(?:js|json))"/g)].map(m => new URL(m[1], base).href));
@@ -48,6 +54,9 @@ while (queue.length && seen.size < 40) {
   for (const m of b.matchAll(/["'`](\.{0,2}\/?q-[A-Za-z0-9_-]+\.js)["'`]/g)) queue.push(new URL(m[1], u).href);
   const hits = (b.match(/price|fare|availability|timetable|departure/gi) || []).length;
   console.log(`  ${u.split("/").slice(-1)[0]} ${r.status} ${b.length}B keywords ${hits}`);
-  if (hits > 3) { const i = b.search(/fetch\(|\$fetch|axios|XMLHttpRequest/); if (i >= 0) console.log(`    fetch ctx: ${b.slice(Math.max(0, i - 200), i + 300).replace(/\s+/g, " ")}`); }
+  if (hits > 3) {
+    for (const m of [...b.matchAll(/fetch\(|\$fetch|axios|XMLHttpRequest|routeLoader|server\$|action\$/g)].slice(0, 6)) console.log(`    call ctx: ${b.slice(Math.max(0, m.index - 150), m.index + 250).replace(/\s+/g, " ")}`);
+    const keys = uniq(b.match(/[a-zA-Z]*(?:[Pp]rice|[Ff]are)[a-zA-Z]*/g) || []).slice(0, 40); console.log(`    price identifiers: ${keys.join(" ")}`);
+  }
 }
 console.log(`\nendpoint-like strings (${endpoints.size}):\n  ${[...endpoints].slice(0, 80).join("\n  ")}`);
