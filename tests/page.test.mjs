@@ -262,7 +262,9 @@ test("Live prices via the proxy: searches for the date on screen; live prices be
   const { page, ctx } = await openPage({ fares: { fetchedOn: "2026-11-03", routes: {}, quotes: { "irish-HHD-DUB|2026-11-10|19:30": { amount: 99, date: "2026-11-10", seenOn: "2026-11-03" } } } });
   const asked = [];
   await page.route("https://proxy.test/**", (route) => {
-    const u = new URL(route.request().url()); asked.push(`${u.pathname}?${u.searchParams}`);
+    const u = new URL(route.request().url());
+    if (u.pathname === "/status") return route.fulfill({ status: 502, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ error: "upstream" }) });
+    asked.push(`${u.pathname}?${u.searchParams}`);
     const rows = u.searchParams.get("route") === "HHD-DUB" && u.searchParams.get("date") === "2026-11-10"
       ? [{ from: "HHD", to: "DUB", dep: "19:30", date: "2026-11-10", arr: "23:00", arrDate: "2026-11-10", durMin: 210, amount: 185 },
          { from: "HHD", to: "DUB", dep: "16:00", date: "2026-11-10", arr: "19:30", arrDate: "2026-11-10", durMin: 210, amount: 150 }] : [];
@@ -331,5 +333,37 @@ test("Operator status lozenges: on time green, short delay yellow, long delay am
   assert.match(await moved.textContent(), /Ferry from Fishguard → Rosslare Europort[\s\S]*Timetable departure\s*14:00[\s\S]*Check-in closes 13:00/);
   // Data sources row says when status was collected.
   assert.match(await page.textContent("#sources"), /Sailing status\s*collected Tue 3 Nov \(today\)/);
+  await ctx.close();
+});
+
+test("Live status via the proxy: operator pages read on open replace the collected file per source; failed sources keep the older data", async () => {
+  const rec = (routeId, date, dep, arr, extra = {}) => { const [op, from, to] = routeId.split("-"); return { operator: op, routeId, from, to, date, dep, arr, arrDate: date, ship: "S", statusLabel: "On Time", status: "on-time", notice: null, originalDep: null, revisedDep: null, estimatedDep: null, replacement: null, checkInMin: null, ...extra }; };
+  const OLD = "2026-11-03T08:00:00.000Z", NEW = "2026-11-03T09:58:00.000Z";
+  const file = { schema: 1, collectedAt: OLD, complete: true,
+    sources: { s6: { ok: true, fetchedAt: OLD, operator: "stena", routeIds: ["stena-HHD-DUB"], lastGoodAt: OLD }, i1: { ok: true, fetchedAt: OLD, operator: "irish", routeIds: ["irish-HHD-DUB"], lastGoodAt: OLD } },
+    coverage: { "stena-HHD-DUB|2026-11-10": { source: "s6", fetchedAt: OLD }, "irish-HHD-DUB|2026-11-10": { source: "i1", fetchedAt: OLD } },
+    sailings: { "stena-HHD-DUB|2026-11-10|16:00": rec("stena-HHD-DUB", "2026-11-10", "16:00", "19:30", { source: "s6", fetchedAt: OLD }),
+                "irish-HHD-DUB|2026-11-10|19:30": rec("irish-HHD-DUB", "2026-11-10", "19:30", "23:00", { source: "i1", fetchedAt: OLD }) } };
+  const live = { schema: 1, collectedAt: NEW, complete: false, via: "proxy",
+    sources: { s6: { ok: true, fetchedAt: NEW, operator: "stena", routeIds: ["stena-HHD-DUB"], lastGoodAt: NEW }, i1: { ok: false, fetchedAt: null, error: "HTTP 503", operator: "irish", routeIds: ["irish-HHD-DUB"] } },
+    coverage: { "stena-HHD-DUB|2026-11-10": { source: "s6", fetchedAt: NEW } },
+    sailings: { "stena-HHD-DUB|2026-11-10|16:00": rec("stena-HHD-DUB", "2026-11-10", "16:00", "19:30", { source: "s6", fetchedAt: NEW, status: "delayed", statusLabel: "Delayed", estimatedDep: "16:40" }) } };
+  const { page, ctx } = await openPage({ status: file });
+  let statusCalls = 0;
+  await page.route("https://proxy.test/**", (route) => { const u = new URL(route.request().url());
+    if (u.pathname === "/status") { statusCalls++; return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(live) }); }
+    return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ checkedAt: NEW, rows: [] }) }); });
+  await seg(page, "questionSeg", "fastest");
+  const lz = (id) => page.locator(`.opt[data-id="${id}"] .status-lz`).textContent();
+  assert.equal(await lz("stena-HHD-DUB|2026-11-10|16:00"), "On time"); // from the file, before the proxy is set
+  await page.click("#settingsBtn"); await page.fill("#proxy", "https://proxy.test"); await page.click("#saveSettings");
+  await page.waitForFunction(() => /Delayed 40 min/.test(document.querySelector("#hero, #list") && document.body.textContent));
+  assert.equal(await lz("stena-HHD-DUB|2026-11-10|16:00"), "Delayed 40 min");             // live Stena read replaced the file
+  assert.equal(await lz("irish-HHD-DUB|2026-11-10|19:30"), "On time");                   // Irish read failed live: older data kept
+  assert.match(await page.locator('.opt[data-id="irish-HHD-DUB|2026-11-10|19:30"] .leg-status').textContent(), /read 08:00/);
+  assert.match(await page.locator('.opt[data-id="stena-HHD-DUB|2026-11-10|16:00"] .leg-status').textContent(), /read 09:58/);
+  assert.match(await page.textContent("#banner"), /Sailing status read live 09:58/);
+  assert.match(await page.textContent("#sources"), /read live through your proxy[\s\S]*incomplete; older collected data fills in/);
+  assert.equal(statusCalls, 1);
   await ctx.close();
 });

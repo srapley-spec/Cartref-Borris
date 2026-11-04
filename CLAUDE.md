@@ -20,8 +20,8 @@ until they are updated; say so.
 - **Never hide an option.** Filters apply only on Sam's explicit choice (Day/Night). Unpriced options stay in the
   cost ranking, after the priced ones, flagged "no price yet".
 - **Operators first.** Date-specific sailing times, changes, cancellations and ships come from the operators' own
-  sailing-updates pages via `data/sailing-status.json` (collector `tools/collect-status.mjs`, Action twice hourly). The
-  engine uses those records within their coverage; the timetable pattern in `data/sailings.json` is a labelled estimate
+  sailing-updates pages via `data/sailing-status.json` (collector core `tools/status-core.mjs`: GitHub Action twice hourly, and the Worker's `/status` live when the app
+  opens, merged by `mergeStatus`). The engine uses those records within their coverage; the timetable pattern in `data/sailings.json` is a labelled estimate
   outside it. Never treat a failed read or empty parse as "no sailings"; keep the last good data with its own timestamp.
 - **Never present unverified data as fact.** Each route in `data/sailings.json` records how its times were checked
   (`verified.by`: operator or aggregator, and when); the page shows that per option. Re-check with the manual

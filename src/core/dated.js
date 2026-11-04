@@ -12,6 +12,34 @@ import { dayStart, hhmm, addDays } from "./plan.js";
 export const DELAY_MINOR_MAX_MIN = 59;      // Sam, 4 Nov: delayed under an hour yellow, an hour or more amber
 export const STATUS_STALE_MIN = 120;        // operator status older than this is shown as unavailable, not as current
 
+/**
+ * Merge a fresher status read (e.g. from the proxy) over an older one (the collected file). Per source: when the fresher
+ * read succeeded, its records and coverage replace the older ones for that source's routes and dates; when it failed, the
+ * older data stays with its own timestamps and the failure is recorded. Neither input is mutated.
+ */
+export function mergeStatus(older, fresher) {
+  if (!fresher) return older;
+  if (!older) return fresher;
+  const out = { ...older, sources: { ...older.sources }, coverage: { ...older.coverage }, sailings: { ...older.sailings }, unscheduled: older.unscheduled || [] };
+  for (const [key, src] of Object.entries(fresher.sources || {})) {
+    if (!src.ok) { out.sources[key] = { ...(older.sources?.[key] || {}), ...src, fetchedAt: older.sources?.[key]?.fetchedAt || src.fetchedAt || null, lastGoodAt: older.sources?.[key]?.lastGoodAt || src.lastGoodAt || null }; continue; }
+    const olderAt = older.sources?.[key]?.fetchedAt || "";
+    if (src.fetchedAt && src.fetchedAt < olderAt) continue; // the "fresher" read is older than what we hold
+    const covered = new Set(Object.entries(fresher.coverage || {}).filter(([, c]) => c.source === key).map(([k]) => k));
+    for (const [k, r] of Object.entries(out.sailings)) if (r.source === key || covered.has(`${r.routeId}|${r.date}`)) delete out.sailings[k];
+    for (const [k, c] of Object.entries(out.coverage)) if (c.source === key || covered.has(k)) delete out.coverage[k];
+    for (const [k, r] of Object.entries(fresher.sailings || {})) if (r.source === key) out.sailings[k] = r;
+    for (const k of covered) out.coverage[k] = fresher.coverage[k];
+    out.sources[key] = src;
+  }
+  const good = Object.values(out.sources).filter(s => s.ok).map(s => s.fetchedAt).filter(Boolean).sort();
+  out.collectedAt = [older.collectedAt, fresher.collectedAt].filter(Boolean).sort().at(-1) || null;
+  out.freshestAt = good.at(-1) || null;
+  out.complete = Object.values(out.sources).every(s => s.ok);
+  out.via = fresher.via || older.via || null;
+  return out;
+}
+
 export const PORT_COUNTRY = { HHD: "UK", FGD: "UK", PEM: "UK", DUB: "IE", RSL: "IE" };
 const PORT_BY_NAME = { Holyhead: "HHD", Dublin: "DUB", Fishguard: "FGD", Rosslare: "RSL", Pembroke: "PEM" };
 

@@ -1,13 +1,16 @@
 // Cloudflare Worker for Cartref Borris (source; `node tools/build-worker.mjs` writes the paste-ready proxy/worker.js).
 // GET /prices?route=HHD-DUB&date=2026-11-20&time=0600  -> live AFerry prices (car + 2 adults, one way), cached 1 hour.
+// GET /status  -> the operators' sailing status read now (same shape as data/sailing-status.json), cached 3 minutes.
 // Only fixed upstream hosts; only requests from ALLOW_ORIGIN (e.g. https://srapley-spec.github.io).
 //
 // Setup (Cloudflare dashboard → Workers & Pages → Create → Worker → paste proxy/worker.js):
 //   Settings → Variables: ALLOW_ORIGIN (Text) = https://srapley-spec.github.io
 //   Then in the app: Settings → Proxy URL = the worker's https://… address.
 import { ROUTES, searchAferry } from "../tools/aferry-search.mjs";
+import { collect } from "../tools/status-core.mjs";
 
 const PRICE_TTL_S = 3600;
+const STATUS_TTL_S = 180;
 
 export function validPricesQuery(q, todayISO) {
   const route = q.get("route"), date = q.get("date"), time = q.get("time") || "0000";
@@ -42,6 +45,16 @@ export async function handle(request, env, { fetchFn = fetch, cache = null, slee
     } catch (e) {
       return json({ error: `upstream: ${e.message}` }, 502);
     }
+  }
+  if (url.pathname === "/status") {
+    const key = new Request("https://cache.cartref-borris/status");
+    const hit = cache && await cache.match(key);
+    if (hit) { const body = await hit.json(); return json({ ...body, cached: true }); }
+    const { file } = await collect({ prev: null, fetchFn, now });
+    file.via = "proxy";
+    // Cache even a partial result (its sources say what failed) so a flapping operator page is not hammered.
+    if (cache) await cache.put(key, new Response(JSON.stringify(file), { headers: { "Content-Type": "application/json", "Cache-Control": `max-age=${STATUS_TTL_S}` } }));
+    return json(file);
   }
   return new Response("Not found", { status: 404, headers: cors });
 }

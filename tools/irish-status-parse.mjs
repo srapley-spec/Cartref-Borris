@@ -7,10 +7,10 @@
 import { PORTS } from "./aferry-parse.mjs";
 
 export const SHIP_ALIASES = { Innisfree: "Isle of Innisfree" };
-const MON3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const TABS = ["yesterday", "today", "tomorrow", "dayaftertomorrow"];
 
-const clean = (s) => s.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&#39;|&rsquo;/g, "'").replace(/\s+/g, " ").trim();
+const cleanIrish = (s) => s.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&#39;|&rsquo;/g, "'").replace(/\s+/g, " ").trim();
 
 /** Normalised status from the operator's label. Unknown labels become "other"; the label itself is always kept. */
 export function normaliseStatus(label) {
@@ -27,7 +27,7 @@ export function normaliseStatus(label) {
 
 /** "DD Mon" seen on collectedOn (YYYY-MM-DD) -> the nearest YYYY-MM-DD (handles the year boundary). */
 export function resolveDayMonth(day, mon, collectedOn) {
-  const y0 = +collectedOn.slice(0, 4), m = MON3.indexOf(mon.slice(0, 3));
+  const y0 = +collectedOn.slice(0, 4), m = MONTHS3.indexOf(mon.slice(0, 3));
   if (m < 0) return null;
   const base = Date.parse(collectedOn);
   let best = null;
@@ -77,23 +77,23 @@ export function parseIrishStatusPage(html, collectedOn) {
     warnings.push("date strip not found; dates inferred from the collection date");
     TABS.forEach((t, k) => { dates[t] = addDaysISO(collectedOn, k - 1); });
   }
-  const checkInNote = clean((section.match(/<h2 class="heading--grey">([\s\S]*?)<\/h2>/) || [, ""])[1]) || null;
+  const checkInNote = cleanIrish((section.match(/<h2 class="heading--grey">([\s\S]*?)<\/h2>/) || [, ""])[1]) || null;
   const sailings = [];
   const blockRe = /<div class="sailing-item (\w+)"[^>]*>([\s\S]*?)(?=<div class="sailing-item |<div class="sailing-updates__mobile|$)/g;
   for (const b of section.matchAll(blockRe)) {
     const tab = b[1], body = b[2];
     const date = dates[tab];
     if (!date) { warnings.push(`unknown date tab ${tab}`); continue; }
-    const h3 = clean((body.match(/<h3>([\s\S]*?)<\/h3>/) || [, ""])[1]);
+    const h3 = cleanIrish((body.match(/<h3>([\s\S]*?)<\/h3>/) || [, ""])[1]);
     if (h3) { const dm = h3.match(/(\d{1,2})(?:st|nd|rd|th)? ([A-Z][a-z]+)/); if (dm && resolveDayMonth(dm[1], dm[2], collectedOn) !== date) warnings.push(`tab ${tab} says ${date} but heading says ${h3}`); }
     const rowRe = /<ul class="sailing-listing(?!-header)[^"]*">([\s\S]*?)<\/ul>\s*(?:<div class="sailing-alert-box[\s\S]*?<div class="text-entry">([\s\S]*?)<\/div>)?/g;
     for (const r of body.matchAll(rowRe)) {
-      const li = Object.fromEntries([...r[1].matchAll(/<li class="(\w+)[^"]*">([\s\S]*?)<\/li>/g)].map(m => [m[1], clean(m[2])]));
+      const li = Object.fromEntries([...r[1].matchAll(/<li class="(\w+)[^"]*">([\s\S]*?)<\/li>/g)].map(m => [m[1], cleanIrish(m[2])]));
       const route = (li.from || "").match(/^([A-Z][a-z]+) - ([A-Z][a-z]+)$/);
       if (!route || !/^\d\d:\d\d$/.test(li.dept || "")) { warnings.push(`unparsed row in ${tab}: ${JSON.stringify(li).slice(0, 120)}`); continue; }
       const from = PORTS[route[1]], to = PORTS[route[2]];
       if (!from || !to) continue; // other Irish Ferries routes (France, Dover)
-      const notice = r[2] ? clean(r[2]) : null;
+      const notice = r[2] ? cleanIrish(r[2]) : null;
       const n = notice ? parseNotice(notice) : {};
       const ship = SHIP_ALIASES[li.ship] || li.ship || null;
       const arr = /^\d\d:\d\d$/.test(li.arr || "") ? li.arr : null;

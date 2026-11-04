@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { options, answer, sailingsOn, rankByTime, rankByCost, makeDrive, dayStart, fmt } from "../src/core/plan.js";
-import { datedSailingsFor, effectiveSailing, statusView, delayMinutes, DELAY_MINOR_MAX_MIN, STATUS_STALE_MIN } from "../src/core/dated.js";
+import { datedSailingsFor, effectiveSailing, statusView, delayMinutes, mergeStatus, DELAY_MINOR_MAX_MIN, STATUS_STALE_MIN } from "../src/core/dated.js";
 
 const data = JSON.parse(readFileSync(new URL("../data/sailings.json", import.meta.url)));
 const settings = { marginMin: 15, disembarkMin: 20, stops: 0, stopMin: 0, fastFerry: false };
@@ -103,4 +103,28 @@ test("a rescheduled sailing is one record, keyed by its original time: no duplic
   // A 01:15 sailing on the 5th means leaving Borris on the evening of the 4th.
   const a = options(data, { dir: "back", date: "2026-11-04", drive: est, dated: d, settings }).filter(o => o.id.startsWith("irish-DUB-HHD|2026-11-05"));
   assert.deepEqual(a.map(o => o.id), ["irish-DUB-HHD|2026-11-05|01:15"]); // option id uses the time it actually sails (and is sold) at
+});
+
+test("mergeStatus: a fresher successful source replaces its records and coverage; a failed one keeps the older data and timestamp; nothing mutated", () => {
+  const OLD = "2026-11-04T08:00:00.000Z", NEW = "2026-11-04T10:00:00.000Z";
+  const r = (routeId, date, dep, source, fetchedAt, status = "on-time") => ({ routeId, date, dep, source, fetchedAt, status });
+  const older = { collectedAt: OLD, complete: true,
+    sources: { a: { ok: true, fetchedAt: OLD, lastGoodAt: OLD }, b: { ok: true, fetchedAt: OLD, lastGoodAt: OLD } },
+    coverage: { "x|2026-11-04": { source: "a", fetchedAt: OLD }, "x|2026-11-05": { source: "a", fetchedAt: OLD }, "y|2026-11-04": { source: "b", fetchedAt: OLD } },
+    sailings: { "x|2026-11-04|10:00": r("x", "2026-11-04", "10:00", "a", OLD), "x|2026-11-05|10:00": r("x", "2026-11-05", "10:00", "a", OLD), "y|2026-11-04|09:00": r("y", "2026-11-04", "09:00", "b", OLD) } };
+  const fresher = { collectedAt: NEW, complete: false, via: "proxy",
+    sources: { a: { ok: true, fetchedAt: NEW, lastGoodAt: NEW }, b: { ok: false, fetchedAt: null, error: "HTTP 503" } },
+    coverage: { "x|2026-11-04": { source: "a", fetchedAt: NEW } }, // tomorrow not returned this time
+    sailings: { "x|2026-11-04|10:30": r("x", "2026-11-04", "10:30", "a", NEW, "delayed") } };
+  const snap = JSON.stringify([older, fresher]);
+  const m = mergeStatus(older, fresher);
+  assert.deepEqual(Object.keys(m.sailings).sort(), ["x|2026-11-04|10:30", "y|2026-11-04|09:00"]); // old x records gone (a replaced), y kept
+  assert.deepEqual(Object.keys(m.coverage).sort(), ["x|2026-11-04", "y|2026-11-04"]);
+  assert.equal(m.coverage["y|2026-11-04"].fetchedAt, OLD); assert.equal(m.sources.b.ok, false); assert.equal(m.sources.b.fetchedAt, OLD); assert.equal(m.sources.b.lastGoodAt, OLD);
+  assert.equal(m.sources.a.fetchedAt, NEW); assert.equal(m.complete, false); assert.equal(m.freshestAt, NEW); assert.equal(m.via, "proxy");
+  assert.equal(JSON.stringify([older, fresher]), snap, "inputs untouched");
+  assert.equal(mergeStatus(older, null), older); assert.equal(mergeStatus(null, fresher), fresher);
+  // A "fresher" read that is actually older than what we hold does not replace it.
+  const stale = { ...fresher, sources: { a: { ok: true, fetchedAt: "2026-11-04T07:00:00.000Z" } } };
+  assert.equal(mergeStatus(older, stale).sailings["x|2026-11-04|10:00"].fetchedAt, OLD);
 });

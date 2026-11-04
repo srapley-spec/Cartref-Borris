@@ -5,6 +5,7 @@ import { execFileSync } from "node:child_process";
 import { parseResults, searchAferry, searchBody, ROUTES, UA } from "../tools/aferry-search.mjs";
 import { handle, validPricesQuery } from "../proxy/worker-src.mjs";
 import { priceSearches, mapLiveRows, SEARCH_PLAN } from "../src/core/prices.js";
+import { SOURCES } from "../tools/status-core.mjs";
 
 const FIXTURE = readFileSync(new URL("./fixtures/aferry-results-HHD-DUB-2026-11-20.html", import.meta.url), "utf8");
 const data = JSON.parse(readFileSync(new URL("../data/sailings.json", import.meta.url)));
@@ -83,4 +84,25 @@ test("live rows map to our sailings by ports and departure time (operator inferr
   assert.deepEqual(Object.keys(prices), ["irish-HHD-DUB|2026-11-20|13:15", "stena-HHD-DUB|2026-11-20|16:00", "irish-PEM-RSL|2026-11-21|02:45"]);
   assert.equal(prices["stena-HHD-DUB|2026-11-20|16:00"].amount, 201);
   assert.deepEqual(unmatched.map(r => r.dep), ["11:11"]);
+});
+
+test("worker /status: reads the operator pages now, same shape as the collected file, cached 3 minutes, partial results still served", async () => {
+  const env = { ALLOW_ORIGIN: "https://srapley-spec.github.io" };
+  const req = (path) => new Request(`https://w.example${path}`, { headers: { Origin: env.ALLOW_ORIGIN } });
+  const fx = (n) => readFileSync(new URL(`./fixtures/${n}`, import.meta.url), "utf8");
+  const pages = { "id=6": fx("stena-ferrycheck-holyhead-dublin-2026-11-04.html"), "id=5": fx("stena-ferrycheck-dublin-holyhead-2026-11-04.html"), "id=8": fx("stena-ferrycheck-fishguard-rosslare-2026-11-04.html"), "id=7": fx("stena-ferrycheck-rosslare-fishguard-2026-11-04.html"), "dublin-holyhead": fx("irish-status-dublin-holyhead-2026-11-04.html") };
+  let fetches = 0;
+  const fetchFn = async (url) => { fetches++; const k = Object.keys(pages).find(k => url.includes(k)); return k ? new Response(pages[k]) : new Response("down", { status: 503 }); };
+  const store = new Map();
+  const cache = { match: async (k) => store.get(k.url)?.clone(), put: async (k, v) => { store.set(k.url, v); } };
+  const deps = { fetchFn, cache, now: () => Date.parse("2026-11-04T10:30:00Z") };
+  const r1 = await handle(req("/status"), env, deps);
+  assert.equal(r1.status, 200);
+  const j1 = await r1.json();
+  assert.equal(j1.via, "proxy"); assert.equal(j1.complete, false); assert.equal(fetches, SOURCES.length);
+  assert.equal(j1.sources["irish-rosslare-pembroke"].ok, false); assert.match(j1.sources["irish-rosslare-pembroke"].error, /503/);
+  assert.equal(Object.keys(j1.sailings).length, 24 + 32); assert.ok(j1.coverage["stena-HHD-DUB|2026-11-05"]);
+  const j2 = await (await handle(req("/status"), env, deps)).json();
+  assert.equal(j2.cached, true); assert.equal(fetches, SOURCES.length, "served from cache");
+  assert.equal((await handle(new Request("https://w.example/status", { headers: { Origin: "https://evil.example" } }), env, deps)).status, 403);
 });

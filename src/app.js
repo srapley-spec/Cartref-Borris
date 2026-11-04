@@ -4,7 +4,8 @@ import { answer, options, byPreference, summary, makeDrive, fmt, duration, count
 import { driveMinutes, bucket, utcMsToLocalMin } from "./google.js";
 import { freshness, timetableCheckedOn, STALE_AFTER_DAYS } from "./core/freshness.js";
 import { priceSearches, mapLiveRows } from "./core/prices.js";
-import { statusView, STATUS_STALE_MIN } from "./core/dated.js";
+import { statusView, STATUS_STALE_MIN, mergeStatus } from "./core/dated.js";
+export const LIVE_STATUS_MS = 5 * 60000; // re-read operator status through the proxy while the page is open
 
 const LS = { settings: "cb.settings.v1", fares: "cb.fares.v1", drive: "cb.drive.v1", form: "cb.form.v2", live: "cb.live.v1" };
 export const LIVE_TTL_MS = 60 * 60000; // live prices are re-searched after an hour
@@ -21,8 +22,23 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   try { const r = await fetchFn("data/ships.json"); if (r.ok) shipData = { sailings: {}, fastShipsSeen: {}, ...(await r.json()) }; } catch { /* none yet */ }
   const ships = shipData.sailings;
   // Operator sailing status (dated records + coverage), collected by .github/workflows/status.yml. Same-origin file.
-  let dated = null;
-  try { const r = await fetchFn("data/sailing-status.json"); if (r.ok) dated = await r.json(); } catch { /* none yet */ }
+  let datedFile = null, datedLive = null, dated = null, liveStatusError = null, liveStatusAt = 0;
+  try { const r = await fetchFn("data/sailing-status.json"); if (r.ok) datedFile = await r.json(); } catch { /* none yet */ }
+  dated = datedFile;
+  // With a proxy configured, read the operators' pages now (the collected file can be up to half an hour old or more).
+  async function fetchLiveStatus(force = false) {
+    if (!state.settings.proxyUrl) { datedLive = null; dated = datedFile; return; }
+    if (!force && now() - liveStatusAt < LIVE_STATUS_MS) return;
+    liveStatusAt = now();
+    try {
+      const r = await fetchFn(`${state.settings.proxyUrl}/status`);
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+      if (!j || typeof j.sources !== "object") throw new Error("unexpected reply");
+      datedLive = j; liveStatusError = null;
+    } catch (e) { liveStatusError = e.message; }
+    dated = mergeStatus(datedFile, datedLive);
+  }
   const statusFetchedMin = (o) => { const c = dated?.coverage?.[`${o.record?.routeId}|${o.record?.date}`]; return c?.fetchedAt ? utcMsToLocalMin(Date.parse(c.fetchedAt)) : null; };
   let fareData = { quotes: {}, routes: {} };
   try { const r = await fetchFn("data/fares.json"); if (r.ok) fareData = { quotes: {}, routes: {}, ...(await r.json()) }; } catch { /* none yet */ }
@@ -81,7 +97,7 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   $("#margin").value = state.settings.marginMin; $("#disembark").value = state.settings.disembarkMin; $("#stopMin").value = state.settings.stopMin;
   $("#saveSettings").onclick = () => {
     Object.assign(state.settings, { googleKey: $("#key").value.trim(), proxyUrl: $("#proxy").value.trim().replace(/\/+$/, ""), marginMin: num("#margin", 15), disembarkMin: num("#disembark", 20), stopMin: num("#stopMin", 30) });
-    state.googleError = null; saveSettings();
+    state.googleError = null; liveStatusAt = 0; saveSettings();
   };
   function num(sel, d) { const v = parseInt($(sel).value, 10); return Number.isFinite(v) && v >= 0 ? v : d; }
   function saveSettings() { save(LS.settings, state.settings); refresh(); }
@@ -97,14 +113,14 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
         detail: fareData.fetchedOn ? `${state.settings.proxyUrl ? "Live AFerry searches for the dates on screen (re-searched after an hour); " : ""}AFerry: ${quotes} dated price${quotes === 1 ? "" : "s"} for specific sailings, plus monthly typical prices, refreshed daily.` : "No fetched prices yet." },
       { key: "ships", label: "Ships", verb: "updated", updatedOn: shipData.updatedOn || null,
         detail: shipData.updatedOn ? "Which ship ran each Irish Ferries sailing, from its status pages. Refreshed daily." : "Not yet recorded." },
-      { key: "status", label: "Sailing status", verb: "collected", updatedOn: statusUpdatedAt(),
+      { key: "status", label: "Sailing status", verb: datedLive ? "read live" : "collected", updatedOn: statusUpdatedAt(),
         detail: statusDetail() },
       { key: "drive", label: "Drive times", verb: "updated", optional: true, updatedOn: state.settings.googleKey && driveAts.length ? driveAts.at(-1) : null,
         detail: state.settings.googleKey ? "Google Routes with traffic for each departure time; kept up to 7 days." : "No Google key: rough estimates without traffic (marked “estimate”)." },
     ], today);
   }
   function statusUpdatedAt() {
-    const good = Object.values(dated?.sources || {}).map(x => x.fetchedAt).filter(Boolean).sort();
+    const good = Object.values(dated?.sources || {}).filter(x => x.ok).map(x => x.fetchedAt).filter(Boolean).sort();
     return good.at(-1) || null;
   }
   function statusDetail() {
@@ -112,7 +128,9 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
     const src = Object.values(dated.sources || {});
     const failed = src.filter(x => !x.ok);
     const at = (iso) => iso ? `${niceDate(iso.slice(0, 10))} ${clock(iso)}` : "never";
-    const parts = [`Stena Line FerryCheck boards and Irish Ferries sailing updates, collected ${at(dated.collectedAt)}${dated.complete ? "" : " (incomplete)"}.`];
+    const parts = [datedLive
+      ? `Stena Line FerryCheck boards and Irish Ferries sailing updates, read live through your proxy ${at(datedLive.collectedAt)}${datedLive.cached ? " (proxy cache, up to 3 min)" : ""}${dated.complete ? "" : " (incomplete; older collected data fills in)"}.`
+      : `Stena Line FerryCheck boards and Irish Ferries sailing updates, collected by the twice-hourly job ${at(dated.collectedAt)}${dated.complete ? "" : " (incomplete)"}.${state.settings.proxyUrl && liveStatusError ? ` Live read through your proxy failed (${liveStatusError}).` : state.settings.proxyUrl ? "" : " Set a Proxy URL in Settings to read the operators live when you open the app."}`];
     if (failed.length) parts.push(`Not reachable last time: ${failed.map(x => `${x.operator === "stena" ? "Stena" : "Irish Ferries"} ${x.routeIds.join("/")} (last good ${at(x.lastGoodAt)})`).join("; ")}.`);
     parts.push("Operators do not publish an update time on these pages; the time shown is when we read them. Status older than 2 hours is shown as unavailable.");
     return parts.join(" ");
@@ -120,7 +138,7 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   function drawSources() {
     const list = sources();
     const bit = (x) => x.key === "drive" && !state.settings.googleKey ? `<span>Drive times: estimates</span>`
-      : `<span class="${x.stale ? "stale" : ""}">${esc(x.label)} ${x.updatedOn ? `${x.verb} ${esc(x.ageText)}` : "never updated"}</span>`;
+      : `<span class="${x.stale ? "stale" : ""}">${esc(x.label)} ${x.updatedOn ? `${x.verb} ${x.key === "status" ? esc(clock(x.updatedOn)) + (x.ageDays ? ` (${esc(x.ageText)})` : "") : esc(x.ageText)}` : "never updated"}</span>`;
     $("#banner").innerHTML = list.map(bit).join(" · ") + (list.some(x => x.stale) ? ` <b class="stale">Check before booking.</b>` : "");
     $("#sources").innerHTML = `<h3>Data sources</h3>` + list.map(x => `<div class="src-row${x.stale ? " stale" : ""}"><b>${esc(x.label)}</b>
       <span>${x.updatedOn ? `${x.verb} ${esc(niceDate(x.updatedOn.slice(0, 10)))} (${esc(x.ageText)})` : "never updated"}${x.stale ? " · out of date" : ""}</span>
@@ -253,9 +271,10 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
     });
   }
 
-  function refresh() { draw(); fetchDrives().then(draw); fetchLive().then(draw); }
+  function refresh() { draw(); fetchDrives().then(draw); fetchLive().then(draw); fetchLiveStatus().then(draw); }
   refresh();
   setInterval(draw, 30000); // countdowns
+  setInterval(() => fetchLiveStatus().then(draw), 60000); // re-reads status every LIVE_STATUS_MS while open
   return { form, state, draw };
 }
 

@@ -101,9 +101,14 @@ planner uses; outside it the timetable pattern below is a labelled estimate. See
 - **4 Nov 2026, 10:32 UTC** First live status collection on GitHub's runner: all six operator sources returned 200 and
   parsed (72 records, 24 route-days). The scheduled job runs at :09 and :39.
 
+- **4 Nov 2026** Sam: the timetable rarely changes; status accuracy is what matters. Status is therefore read live
+  through the Worker (`/status`, 3-minute cache) when the app opens and every 5 minutes while open, merged over the
+  collected file; the GitHub schedule is the fallback. The collector core (`tools/status-core.mjs`) is shared by the
+  Action and the Worker; the bundler now refuses duplicate top-level names.
+
 ## Known gaps / next
 1. Timetable pattern (future dates): confirm Stena's pattern from Stena; fix day-of-week patterns using `unscheduled` from the collector.
-1b. Collector cadence is GitHub-scheduled (best effort). For dependable frequent updates move it to a scheduled backend with monitoring; confirm the operators' permitted automated use.
+1b. Without the Worker, status is GitHub-scheduled (best effort). Confirm the operators' permitted automated use before relying on this for a wider audience.
 2. Measure the fallback drive estimates with Google (needs `GOOGLE_MAPS_KEY` in the environment).
 3. Live any-date fares (booking-engine automation) only if Sam agrees; return-fare vs two-singles pricing; cabin costs on overnight sailings.
 4. Booking links go to operator home pages; deep links with dates are unverified.

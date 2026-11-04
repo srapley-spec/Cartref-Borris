@@ -66,9 +66,19 @@ sailing, check-in minutes, source, fetchedAt), `unscheduled` (dated sailings our
     that status older than two hours is shown as unavailable. → page "Data sources…" (banner), lozenge test
 11. Prices, bookable capacity and operational status remain separate facts; "On time" never implies availability.
 
+## Live when you open the app (Sam, 4 Nov: "what really matters is the sailing status being accurate")
+The twice-hourly job is a floor, not the feed. With a Proxy URL set, the app also calls the Worker's `/status`, which
+reads the six operator pages at that moment (cached three minutes on the Worker so repeated opens don't hammer the
+operators) and merges the result over the collected file (`mergeStatus` in `src/core/dated.js`): a source that read
+successfully replaces its records and coverage; one that failed leaves the older data in place with its own timestamp
+and is reported. The page re-reads every five minutes while open. The Data sources row says "read live HH:MM" or
+"collected HH:MM" accordingly. → `tests/dated.test.mjs` "mergeStatus…", `tests/live-prices.test.mjs` "worker /status…",
+`tests/page.test.mjs` "Live status via the proxy…"
+
 ## Refresh and limits
-GitHub Actions cron `9,39 * * * *`: best-effort, often minutes late. Not a real-time feed; the app says when data was
-collected and degrades to "Status unavailable" after two hours. Coverage is today/tomorrow (Stena) and ±2 days (Irish
+Without a proxy, GitHub Actions cron `9,39 * * * *` is all there is: best-effort, often minutes late. The app says when
+data was read and degrades to "Status unavailable" after two hours. With the proxy, status is as fresh as the operators'
+pages at the moment of opening (plus up to three minutes of Worker cache). Coverage is today/tomorrow (Stena) and ±2 days (Irish
 Ferries) only; future dates use the timetable pattern. Delay estimates depend on the operator publishing an expected
 time; in the 4 Nov fixtures neither did. The operators' terms for automated reading have not been confirmed; the
 collector identifies itself and makes six requests per run.

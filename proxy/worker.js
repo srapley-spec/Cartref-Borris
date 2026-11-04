@@ -65,9 +65,350 @@ async function searchAferry(routeKey, date, { time = "0000", fetchFn = fetch, sl
   return { ...last, url: location };
 }
 
+// ---- tools/aferry-parse.mjs
+// Pure parser for AFerry route pages (text after tag stripping). No network. Tested in tests/aferry-parse.test.mjs.
+// Extracts: dated "Latest Ticket Prices" quotes, the monthly average table and the per-operator average table.
+
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MON3 = MONTHS.map(m => m.slice(0, 3));
+const DOW3 = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const OPERATORS = { "Irish Ferries": "irish", "Stena Line": "stena" };
+const PORTS = { Holyhead: "HHD", Dublin: "DUB", Fishguard: "FGD", Rosslare: "RSL", Pembroke: "PEM" };
+
+/** HTML -> " | "-separated visible text. */
+function pageText(html) {
+  return html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " | ").replace(/&nbsp;|&#160;/g, " ").replace(/&amp;/g, "&").replace(/&#39;/g, "'")
+    .replace(/[ \t\r\n]+/g, " ").replace(/(\s*\|\s*)+/g, " | ");
+}
+
+/** "Fri 6 Nov" seen on fetchDate (YYYY-MM-DD) -> YYYY-MM-DD in the next year that matches the weekday (within ±1 year). */
+function resolveDate(dow, day, mon, fetchDate) {
+  const y0 = +fetchDate.slice(0, 4), m = MON3.indexOf(mon), d = +day;
+  const fetchMs = Date.UTC(y0, +fetchDate.slice(5, 7) - 1, +fetchDate.slice(8, 10));
+  for (const y of [y0, y0 + 1, y0 - 1]) {
+    const ms = Date.UTC(y, m, d);
+    if (new Date(ms).getUTCDay() !== DOW3.indexOf(dow)) continue;
+    if (ms < fetchMs - 3 * 86400000 && y === y0 - 1) continue;
+    return new Date(ms).toISOString().slice(0, 10);
+  }
+  return null;
+}
+
+function parseAferry(text, fetchDate) {
+  const quotes = [];
+  const qre = /\b([A-Z][a-z]+) \| → \| ([A-Z][a-z]+) \| (Mon|Tue|Wed|Thu|Fri|Sat|Sun) (\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec), (\d\d:\d\d) \| ([A-Za-z&; ]+?) \| (?:Search \| )?£\s?(\d+(?:\.\d\d)?)/g;
+  for (const m of text.matchAll(qre)) {
+    const [, from, to, dow, day, mon, dep, opName, amount] = m;
+    const op = OPERATORS[opName.trim()], f = PORTS[from], t = PORTS[to];
+    const date = resolveDate(dow, day, mon, fetchDate);
+    if (!op || !f || !t || !date) continue;
+    quotes.push({ sailingId: `${op}-${f}-${t}|${date}|${dep}`, operator: op, from: f, to: t, date, dep, amount: +amount });
+  }
+  const monthly = {};
+  const mre = new RegExp(`\\b(${MONTHS.join("|")}) \\| £(\\d+) \\| (Peak Period|Mid-Season|Off-Peak)`, "g");
+  for (const m of text.matchAll(mre)) monthly[MONTHS.indexOf(m[1]) + 1] = { amount: +m[2], season: m[3] };
+  const operatorAvg = {};
+  const ore = /\b(Irish Ferries|Stena Line) \| £(\d+) \| (\d+h(?: \d+min)?) \| (\d+) sailings/g;
+  for (const m of text.matchAll(ore)) operatorAvg[OPERATORS[m[1]]] = { amount: +m[2], duration: m[3], weeklySailings: +m[4] };
+  return { quotes, monthly, operatorAvg };
+}
+
+// ---- tools/irish-status-parse.mjs
+// Pure parser for Irish Ferries sailing-updates pages (ie-en or uk-en), one record per sailing per date.
+// Page structure (4 Nov 2026): a date strip (yesterday / today / tomorrow / dayaftertomorrow, each "DD <em>Dow</em> Mon"),
+// then for each date and direction a <div class="sailing-item {tab}"> holding a header "from <port>", rows
+// <ul class="sailing-listing …"> with <li class="dept|arr|ship|stats">, an optional notice after each row, and an
+// <h3>Weekday Nth Month</h3>. Notices like "your 03/11/2026 02:00 Dublin to Holyhead … will depart at earlier time of
+// 01:15" give the original and revised departure explicitly; displayed times already incorporate the change.
+
+
+const SHIP_ALIASES = { Innisfree: "Isle of Innisfree" };
+const MONTHS3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const TABS = ["yesterday", "today", "tomorrow", "dayaftertomorrow"];
+
+const cleanIrish = (s) => s.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&#39;|&rsquo;/g, "'").replace(/\s+/g, " ").trim();
+
+/** Normalised status from the operator's label. Unknown labels become "other"; the label itself is always kept. */
+function normaliseStatus(label) {
+  const l = label.trim().toLowerCase();
+  if (/cancel/.test(l)) return "cancelled";
+  if (/^on time$/.test(l)) return "on-time";
+  if (/arrived/.test(l)) return "arrived";
+  if (/departed|sailed/.test(l)) return "departed";
+  if (/early/.test(l)) return "early";
+  if (/delay|late/.test(l)) return "delayed";
+  if (/boarding|check-?in/.test(l)) return "boarding";
+  return "other";
+}
+
+/** "DD Mon" seen on collectedOn (YYYY-MM-DD) -> the nearest YYYY-MM-DD (handles the year boundary). */
+function resolveDayMonth(day, mon, collectedOn) {
+  const y0 = +collectedOn.slice(0, 4), m = MONTHS3.indexOf(mon.slice(0, 3));
+  if (m < 0) return null;
+  const base = Date.parse(collectedOn);
+  let best = null;
+  for (const y of [y0 - 1, y0, y0 + 1]) {
+    const iso = `${y}-${String(m + 1).padStart(2, "0")}-${String(+day).padStart(2, "0")}`;
+    const d = Math.abs(Date.parse(iso) - base);
+    if (best == null || d < best.d) best = { iso, d };
+  }
+  return best.iso;
+}
+
+function addDaysISO(iso, n) { return new Date(Date.parse(iso) + n * 86400000).toISOString().slice(0, 10); }
+
+/** Explicit facts in a notice: original departure, revised time, cancellation, replacement sailing, check-in. */
+function parseNotice(text) {
+  const out = {};
+  const orig = text.match(/\b(\d\d)\/(\d\d)\/(\d{4}) (\d\d:\d\d)\b/);
+  if (orig) { out.originalDate = `${orig[3]}-${orig[2]}-${orig[1]}`; out.originalDep = orig[4]; }
+  const rev = text.match(/(?:earlier|later|revised|new|rescheduled|estimated) (?:departure )?time of (\d\d:\d\d)/i) || text.match(/depart(?:ing)? at (\d\d:\d\d)/i);
+  if (rev) out.revisedDep = rev[1];
+  if (/cancel/i.test(text)) out.cancelled = true;
+  const repl = text.match(/on the (StenaLine|Stena Line|Irish Ferries) sailing (?:to|from) ([A-Z][a-z]+)/i);
+  if (repl) out.replacement = { operator: /stena/i.test(repl[1]) ? "stena" : "irish", port: repl[2] };
+  const ci = text.match(/check[- ]?in(?: time)?(?: is)?(?: at least)? (\d+) (minutes?|hours?|hr) before/i);
+  if (ci) out.checkInMin = /hour|hr/.test(ci[2]) ? +ci[1] * 60 : +ci[1];
+  return out;
+}
+
+/**
+ * html: the page (or its desktop sailing-updates section). collectedOn: YYYY-MM-DD the page was fetched (local).
+ * Returns { dates: { tab: YYYY-MM-DD }, checkInNote, sailings, warnings }.
+ * Each sailing: { operator: "irish", from, to, routeId, date, dep, arr, arrDate, ship, statusLabel, status, notice,
+ *   originalDep, revisedDep, replacement, checkInMin, tab }. dep/arr are the operator's displayed (current) times.
+ */
+function parseIrishStatusPage(html, collectedOn) {
+  const warnings = [];
+  const i = html.indexOf("sailing-updates__desktop");
+  const section = i >= 0 ? html.slice(i) : html;
+  const dates = {};
+  const strip = section.match(/<ul class="sailing-date-list[\s\S]*?<\/ul>/);
+  if (strip) {
+    for (const m of strip[0].matchAll(/data-datetime="(\w+)"[\s\S]*?<span class="day">\s*(\d{1,2})\s*<em>[^<]*<\/em>\s*<\/span>\s*<span class="month">\s*([A-Za-z]{3})/g)) {
+      dates[m[1]] = resolveDayMonth(m[2], m[3], collectedOn);
+    }
+  }
+  if (!Object.keys(dates).length) {
+    warnings.push("date strip not found; dates inferred from the collection date");
+    TABS.forEach((t, k) => { dates[t] = addDaysISO(collectedOn, k - 1); });
+  }
+  const checkInNote = cleanIrish((section.match(/<h2 class="heading--grey">([\s\S]*?)<\/h2>/) || [, ""])[1]) || null;
+  const sailings = [];
+  const blockRe = /<div class="sailing-item (\w+)"[^>]*>([\s\S]*?)(?=<div class="sailing-item |<div class="sailing-updates__mobile|$)/g;
+  for (const b of section.matchAll(blockRe)) {
+    const tab = b[1], body = b[2];
+    const date = dates[tab];
+    if (!date) { warnings.push(`unknown date tab ${tab}`); continue; }
+    const h3 = cleanIrish((body.match(/<h3>([\s\S]*?)<\/h3>/) || [, ""])[1]);
+    if (h3) { const dm = h3.match(/(\d{1,2})(?:st|nd|rd|th)? ([A-Z][a-z]+)/); if (dm && resolveDayMonth(dm[1], dm[2], collectedOn) !== date) warnings.push(`tab ${tab} says ${date} but heading says ${h3}`); }
+    const rowRe = /<ul class="sailing-listing(?!-header)[^"]*">([\s\S]*?)<\/ul>\s*(?:<div class="sailing-alert-box[\s\S]*?<div class="text-entry">([\s\S]*?)<\/div>)?/g;
+    for (const r of body.matchAll(rowRe)) {
+      const li = Object.fromEntries([...r[1].matchAll(/<li class="(\w+)[^"]*">([\s\S]*?)<\/li>/g)].map(m => [m[1], cleanIrish(m[2])]));
+      const route = (li.from || "").match(/^([A-Z][a-z]+) - ([A-Z][a-z]+)$/);
+      if (!route || !/^\d\d:\d\d$/.test(li.dept || "")) { warnings.push(`unparsed row in ${tab}: ${JSON.stringify(li).slice(0, 120)}`); continue; }
+      const from = PORTS[route[1]], to = PORTS[route[2]];
+      if (!from || !to) continue; // other Irish Ferries routes (France, Dover)
+      const notice = r[2] ? cleanIrish(r[2]) : null;
+      const n = notice ? parseNotice(notice) : {};
+      const ship = SHIP_ALIASES[li.ship] || li.ship || null;
+      const arr = /^\d\d:\d\d$/.test(li.arr || "") ? li.arr : null;
+      const statusLabel = li.stats || "";
+      let status = normaliseStatus(statusLabel);
+      if (n.cancelled && status !== "cancelled") status = "cancelled";
+      sailings.push({ operator: "irish", from, to, routeId: `irish-${from}-${to}`, date, dep: li.dept, arr, arrDate: arr && arr < li.dept ? addDaysISO(date, 1) : date,
+        ship, statusLabel, status, notice,
+        originalDep: n.originalDep && n.originalDep !== li.dept ? n.originalDep : null,
+        revisedDep: n.revisedDep && n.revisedDep !== li.dept ? n.revisedDep : null,
+        replacement: n.replacement || null, checkInMin: n.checkInMin ?? null, tab });
+    }
+  }
+  return { dates, checkInNote, sailings, warnings };
+}
+
+/** Today's rows keyed by route|dep for the daily ships job (HTML or legacy flattened text). */
+function parseIrishStatus(textOrHtml, collectedOn = new Date().toISOString().slice(0, 10)) {
+  if (/<ul class="sailing-listing/.test(textOrHtml)) {
+    return parseIrishStatusPage(textOrHtml, collectedOn).sailings.filter(s => s.tab === "today")
+      .map(s => ({ routeId: s.routeId, from: s.from, to: s.to, dep: s.dep, arr: s.arr, ship: s.ship, status: s.statusLabel }));
+  }
+  const flat = textOrHtml.replace(/\s*\|\s*/g, " ").replace(/\s+/g, " ");
+  const STATUS = "On Time|Arrived|Departed|Delayed|Cancelled|Early Sailing|Late Sailing|Rescheduled|Scheduled|Boarding|Not Operating";
+  const ROW = new RegExp(`\\b(Dublin|Holyhead|Rosslare|Pembroke) - (Dublin|Holyhead|Rosslare|Pembroke) (\\d\\d:\\d\\d) (\\d\\d:\\d\\d) ([A-Z][A-Za-z.' ]{1,30}?) (${STATUS})\\b`, "g");
+  const seen = new Map();
+  for (const m of flat.matchAll(ROW)) {
+    const routeId = `irish-${PORTS[m[1]]}-${PORTS[m[2]]}`;
+    seen.set(`${routeId}|${m[3]}`, { routeId, from: PORTS[m[1]], to: PORTS[m[2]], dep: m[3], arr: m[4], ship: SHIP_ALIASES[m[5].trim()] || m[5].trim(), status: m[6] });
+  }
+  return [...seen.values()];
+}
+
+// ---- tools/stena-status-parse.mjs
+// Pure parser for Stena Line's FerryCheck route pages (https://stenalineferrycheck.azurewebsites.net/RouteInfo/details?id=N),
+// the board embedded in stenaline.co.uk/customer-service/latest-sailing-updates/<route>. One record per sailing per date.
+// Structure (4 Nov 2026): page-title "24HR SAILING UPDATES FOR HOLYHEAD - DUBLIN"; date tabs <li data-day="YYYYMMDD">;
+// per date, rows of <div name="vessel-YYYYMMDD-i"> … "departure-…" "arrival-…" "status-…" (icon class status-icons-N and
+// a text label) and a "remark-…" div (free text; the last one carries the route's check-in rules). "Last updated" is
+// filled in by script, so the operator's own timestamp is not available from the HTML.
+
+
+const STENA_ROUTES = {
+  6: { routeId: "stena-HHD-DUB", from: "HHD", to: "DUB" }, 5: { routeId: "stena-DUB-HHD", from: "DUB", to: "HHD" },
+  8: { routeId: "stena-FGD-RSL", from: "FGD", to: "RSL" }, 7: { routeId: "stena-RSL-FGD", from: "RSL", to: "FGD" },
+};
+const PORT_UPPER = { HOLYHEAD: "HHD", DUBLIN: "DUB", FISHGUARD: "FGD", ROSSLARE: "RSL", PEMBROKE: "PEM" };
+const cleanStena = (s) => s.replace(/&#x?[0-9A-Fa-f]+;/g, " ").replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+const isoDay = (d) => `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
+
+/** Vehicle check-in minutes from the route remark ("Vehicles: … no later than 30 minutes before …"), else null. */
+function parseCheckIn(remark) {
+  const m = remark.match(/Vehicles?:[^.]*?(\d+)\s*minutes/i) || remark.match(/(\d+)\s*minutes before/i);
+  return m ? +m[1] : null;
+}
+
+/** html, routeIdHint (from the URL's id) -> { routeId, from, to, dates: [YYYY-MM-DD], checkInMin, checkInNote, sailings, warnings } */
+function parseStenaStatusPage(html, routeIdHint = null) {
+  const warnings = [];
+  const title = cleanStena((html.match(/page-title">([\s\S]*?)<\/h1>/) || [, ""])[1]);
+  const tm = title.toUpperCase().match(/FOR ([A-Z]+) - ([A-Z]+)/);
+  let from = tm && PORT_UPPER[tm[1]], to = tm && PORT_UPPER[tm[2]];
+  const hinted = routeIdHint && STENA_ROUTES[routeIdHint];
+  if (hinted && (!from || !to)) { from = hinted.from; to = hinted.to; }
+  if (hinted && from && to && (from !== hinted.from || to !== hinted.to)) warnings.push(`page title says ${from}-${to} but id ${routeIdHint} is ${hinted.from}-${hinted.to}; using the title`);
+  if (!from || !to) return { routeId: null, from, to, dates: [], checkInMin: null, checkInNote: null, sailings: [], warnings: [...warnings, "route not recognised from page title"] };
+  const routeId = `stena-${from}-${to}`;
+  const dates = [...new Set([...html.matchAll(/data-day="(\d{8})"/g)].map(m => isoDay(m[1])))];
+  if (!dates.length) warnings.push("no date tabs found");
+  // The check-in remark appears once per date pane (last remark); take the first non-empty one.
+  const remarks = [...html.matchAll(/name="remark-(\d{8})-(\d+)"[^>]*>([\s\S]*?)<\/div>/g)].map(m => ({ day: isoDay(m[1]), i: +m[2], text: cleanStena(m[3]) }));
+  // Check-in rules live in a "customerNotes" section under the board (older pages put them in the last remark).
+  const notes = cleanStena((html.match(/class="row customerNotes"[\s\S]*?(?=<div class="row|<\/body>|$)/) || [, ""])[0] || "");
+  const ciText = /check-?in/i.test(notes) ? notes : (remarks.find(r => /check-?in/i.test(r.text))?.text || null);
+  const ciRemark = ciText ? { text: ciText } : null;
+  const checkInMin = ciText ? parseCheckIn(ciText) : null;
+  const sailings = [];
+  for (const m of html.matchAll(/name="vessel-(\d{8})-(\d+)"[^>]*>([\s\S]*?)<\/div>\s*<div[^>]*name="departure-\1-\2"[^>]*>([\s\S]*?)<\/div>\s*<div[^>]*name="arrival-\1-\2"[^>]*>([\s\S]*?)<\/div>\s*<div[^>]*name="status-\1-\2"[^>]*>([\s\S]*?)<\/div>\s*<div[^>]*name="moreinfo-\1-\2"[^>]*>([\s\S]*?)<\/div>/g)) {
+    const date = isoDay(m[1]), i = +m[2];
+    const ship = cleanStena(m[3]).replace(/^Vessel:\s*/i, "") || null;
+    const dep = (cleanStena(m[4]).match(/\d\d:\d\d/) || [])[0];
+    const arr = (cleanStena(m[5]).match(/\d\d:\d\d/) || [])[0] || null;
+    const statusHtml = m[6];
+    const iconCode = (statusHtml.match(/status-icons-(\d+)/) || [])[1] || null;
+    const statusLabel = cleanStena(statusHtml).replace(/^Status:\s*/i, "").trim();
+    const more = cleanStena(m[7]);
+    const remark = remarks.find(r => r.day === date && r.i === i && !/check-?in/i.test(r.text))?.text || null;
+    if (!dep) { warnings.push(`row ${date}-${i} has no departure time`); continue; }
+    const text = [statusLabel, more, remark].filter(Boolean).join(" ");
+    const est = text.match(/(?:expected|estimated|revised|new)[^0-9]{0,40}(\d\d:\d\d)/i);
+    let status = normaliseStatus(statusLabel);
+    if (status === "other" && /cancel/i.test(text)) status = "cancelled";
+    sailings.push({ operator: "stena", from, to, routeId, date, dep, arr, arrDate: arr && arr < dep ? addDaysISO(date, 1) : date,
+      ship, statusLabel, statusCode: iconCode, status, notice: [more, remark].filter(Boolean).join(" ") || null,
+      originalDep: null, revisedDep: null, estimatedDep: status === "delayed" && est ? est[1] : null,
+      replacement: null, checkInMin });
+  }
+  if (!sailings.length) warnings.push("no sailing rows parsed");
+  return { routeId, from, to, dates, checkInMin, checkInNote: ciRemark ? ciRemark.text : null, sailings, warnings };
+}
+
+// ---- tools/status-core.mjs
+// Sailing-status collector core (pure apart from the injected fetch/clock): operator pages -> status file contents.
+// Used by tools/collect-status.mjs (GitHub Action, writes data/sailing-status.json) and by the Cloudflare Worker (/status,
+// live on demand), so it must not touch node:fs.
+// Sources: Stena Line FerryCheck route boards (today + tomorrow) and Irish Ferries sailing-updates pages (yesterday …
+// day after tomorrow). Each fetch is parsed per date. A failed fetch or an empty parse never means "no sailings": the
+// previous good data for that source is kept with its original timestamp and the source is marked failed.
+// Pure core (`collect`) with injected fetch/clock for tests; `main` reads/writes the file.
+
+
+
+const STATUS_UA = "Mozilla/5.0 (compatible; cartref-borris personal trip planner; sailing status a few times an hour)";
+const KEEP_DAYS_BACK = 1;   // keep yesterday's records (overnight arrivals), drop older
+const SOURCES = [
+  ...Object.entries(STENA_ROUTES).map(([id, r]) => ({ key: `stena-ferrycheck-${id}`, operator: "stena", kind: "stena", id: +id,
+    url: `https://stenalineferrycheck.azurewebsites.net/RouteInfo/details?id=${id}`, routeIds: [r.routeId],
+    publicUrl: `https://www.stenaline.co.uk/customer-service/latest-sailing-updates/${r.from === "HHD" ? "holyhead-dublin" : r.from === "DUB" ? "dublin-holyhead" : r.from === "FGD" ? "fishguard-rosslare" : "rosslare-fishguard"}` })),
+  { key: "irish-dublin-holyhead", operator: "irish", kind: "irish", url: "https://www.irishferries.com/ie-en/sailing-updates/dublin-holyhead/", routeIds: ["irish-DUB-HHD", "irish-HHD-DUB"] },
+  { key: "irish-rosslare-pembroke", operator: "irish", kind: "irish", url: "https://www.irishferries.com/ie-en/sailing-updates/rosslare-pembroke/", routeIds: ["irish-RSL-PEM", "irish-PEM-RSL"] },
+];
+
+const recordKey = (r) => `${r.routeId}|${r.date}|${r.originalDep || r.dep}`;
+const localDate = (ms) => { const p = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(ms)); const g = Object.fromEntries(p.map(x => [x.type, x.value])); return `${g.year}-${g.month}-${g.day}`; };
+const addDaysUTC = (iso, n) => new Date(Date.parse(iso) + n * 86400000).toISOString().slice(0, 10);
+
+/** Parse one source's HTML. Returns { sailings, dates (covered), checkInMin, checkInNote, warnings }. */
+function parseSource(src, html, collectedOn) {
+  if (src.kind === "stena") {
+    const r = parseStenaStatusPage(html, src.id);
+    return { sailings: r.sailings, dates: r.dates, routeIds: r.routeId ? [r.routeId] : [], checkInMin: r.checkInMin, checkInNote: r.checkInNote, warnings: r.warnings };
+  }
+  const r = parseIrishStatusPage(html, collectedOn);
+  return { sailings: r.sailings, dates: Object.values(r.dates), routeIds: src.routeIds, checkInMin: 30, checkInNote: r.checkInNote, warnings: r.warnings };
+}
+
+/**
+ * prev: previous file contents (or null). fetchFn(url, init) -> Response. now() -> ms.
+ * Returns { file, report }: file is the new data/sailing-status.json content.
+ */
+async function collect({ prev = null, fetchFn = fetch, now = () => Date.now(), sources = SOURCES, timetable = null } = {}) {
+  const nowIso = new Date(now()).toISOString(), today = localDate(now());
+  const out = { schema: 1, collectedAt: nowIso, collectedOn: today, cadenceNote: "GitHub Actions schedule (see .github/workflows/status.yml); not a guaranteed real-time feed",
+    sources: { ...(prev?.sources || {}) }, coverage: { ...(prev?.coverage || {}) }, sailings: { ...(prev?.sailings || {}) }, unscheduled: [] };
+  const report = [];
+  for (const src of sources) {
+    const base = { url: src.url, publicUrl: src.publicUrl || src.url, operator: src.operator, routeIds: src.routeIds, attemptedAt: nowIso };
+    const previous = prev?.sources?.[src.key] || {};
+    try {
+      const res = await fetchFn(src.url, { headers: { "User-Agent": STATUS_UA, Accept: "text/html", "Accept-Language": "en-GB" }, redirect: "follow", signal: AbortSignal.timeout(30000) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const html = await res.text();
+      const p = parseSource(src, html, today);
+      if (!p.sailings.length) throw new Error(`parsed no sailings (${p.warnings.join("; ") || "no warnings"})`);
+      // Success: this source's routes × returned dates are now authoritative. Drop its old records for those keys first.
+      const covered = new Set();
+      for (const rid of p.routeIds) for (const d of p.dates) covered.add(`${rid}|${d}`);
+      for (const [k, r] of Object.entries(out.sailings)) if (covered.has(`${r.routeId}|${r.date}`)) delete out.sailings[k];
+      for (const s of p.sailings) {
+        if (!covered.has(`${s.routeId}|${s.date}`)) covered.add(`${s.routeId}|${s.date}`);
+        out.sailings[recordKey(s)] = { ...s, source: src.key, fetchedAt: nowIso, operatorUpdatedAt: null, checkInMin: s.checkInMin ?? p.checkInMin ?? null };
+      }
+      for (const k of covered) out.coverage[k] = { source: src.key, fetchedAt: nowIso, operatorUpdatedAt: null };
+      out.sources[src.key] = { ...base, ok: true, fetchedAt: nowIso, httpStatus: res.status, error: null, warnings: p.warnings, dates: p.dates, sailingsSeen: p.sailings.length, checkInMin: p.checkInMin, checkInNote: p.checkInNote, lastGoodAt: nowIso };
+      report.push(`${src.key}: ok, ${p.sailings.length} sailings over ${p.dates.join(", ")}${p.warnings.length ? ` (warnings: ${p.warnings.join("; ")})` : ""}`);
+    } catch (e) {
+      // Failure: keep the previous records and coverage for this source untouched, with their original fetchedAt.
+      out.sources[src.key] = { ...previous, ...base, ok: false, error: `${e.name === "TimeoutError" ? "timeout" : e.message}`, fetchedAt: previous.fetchedAt || null, lastGoodAt: previous.lastGoodAt || previous.fetchedAt || null };
+      report.push(`${src.key}: FAILED (${out.sources[src.key].error}); kept previous data${previous.fetchedAt ? ` from ${previous.fetchedAt}` : " (none)"}`);
+    }
+  }
+  // Drop records and coverage older than yesterday.
+  const cutoff = addDaysUTC(today, -KEEP_DAYS_BACK);
+  for (const [k, r] of Object.entries(out.sailings)) if (r.date < cutoff) delete out.sailings[k];
+  for (const k of Object.keys(out.coverage)) if (k.split("|")[1] < cutoff) delete out.coverage[k];
+  // Dated sailings our timetable pattern doesn't know (information for maintaining data/sailings.json).
+  if (timetable) {
+    const runsOn = (route, x, date) => {
+      const dow = new Date(Date.parse(date)).getUTCDay();
+      if (x.days && !x.days.includes(dow)) return false;
+      const season = x.season ?? route.season; if (!season) return true;
+      const md = date.slice(5);
+      return season.from <= season.to ? md >= season.from && md <= season.to : md >= season.from || md <= season.to;
+    };
+    for (const r of Object.values(out.sailings)) {
+      const route = timetable.routes.find(t => t.id === r.routeId);
+      const match = route && route.sailings.find(x => x.dep === r.dep && runsOn(route, x, r.date));
+      if (!match) out.unscheduled.push({ routeId: r.routeId, date: r.date, dep: r.dep, ship: r.ship, status: r.status, reason: route && route.sailings.some(x => x.dep === r.dep) ? "timetable says not on this day" : "time not in timetable" });
+    }
+  }
+  out.complete = sources.every(s => out.sources[s.key]?.ok);
+  return { file: out, report };
+}
+
 // ---- proxy/worker-src.mjs
 // Cloudflare Worker for Cartref Borris (source; `node tools/build-worker.mjs` writes the paste-ready proxy/worker.js).
 // GET /prices?route=HHD-DUB&date=2026-11-20&time=0600  -> live AFerry prices (car + 2 adults, one way), cached 1 hour.
+// GET /status  -> the operators' sailing status read now (same shape as data/sailing-status.json), cached 3 minutes.
 // Only fixed upstream hosts; only requests from ALLOW_ORIGIN (e.g. https://srapley-spec.github.io).
 //
 // Setup (Cloudflare dashboard → Workers & Pages → Create → Worker → paste proxy/worker.js):
@@ -75,7 +416,9 @@ async function searchAferry(routeKey, date, { time = "0000", fetchFn = fetch, sl
 //   Then in the app: Settings → Proxy URL = the worker's https://… address.
 
 
+
 const PRICE_TTL_S = 3600;
+const STATUS_TTL_S = 180;
 
 function validPricesQuery(q, todayISO) {
   const route = q.get("route"), date = q.get("date"), time = q.get("time") || "0000";
@@ -110,6 +453,16 @@ async function handle(request, env, { fetchFn = fetch, cache = null, sleep, now 
     } catch (e) {
       return json({ error: `upstream: ${e.message}` }, 502);
     }
+  }
+  if (url.pathname === "/status") {
+    const key = new Request("https://cache.cartref-borris/status");
+    const hit = cache && await cache.match(key);
+    if (hit) { const body = await hit.json(); return json({ ...body, cached: true }); }
+    const { file } = await collect({ prev: null, fetchFn, now });
+    file.via = "proxy";
+    // Cache even a partial result (its sources say what failed) so a flapping operator page is not hammered.
+    if (cache) await cache.put(key, new Response(JSON.stringify(file), { headers: { "Content-Type": "application/json", "Cache-Control": `max-age=${STATUS_TTL_S}` } }));
+    return json(file);
   }
   return new Response("Not found", { status: 404, headers: cors });
 }
