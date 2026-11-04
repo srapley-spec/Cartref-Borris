@@ -6,6 +6,10 @@ on:
       urls:
         description: "Optional whitespace-separated URLs (default list in tools/probe-sources.mjs)"
         required: false
+      script:
+        description: "Probe to run: probe-sources or probe-aferry"
+        required: false
+        default: probe-sources
 jobs:
   probe:
     runs-on: ubuntu-latest
@@ -15,6 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node tools/probe-sources.mjs
+      - run: node tools/${{ inputs.script || 'probe-sources' }}.mjs
         env:
           PROBE_URLS: ${{ inputs.urls }}
+          AFERRY_PAGE: ${{ inputs.urls }}
