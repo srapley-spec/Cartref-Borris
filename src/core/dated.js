@@ -30,7 +30,7 @@ export function delayMinutes(rec) {
  *  "will now be on the StenaLine sailing to Fishguard … at the earlier departure time of 08:15"). */
 export function effectiveSailing(data, rec, dated) {
   let from = rec.from, to = rec.to, dep = rec.dep, arr = rec.arr, arrDate = rec.arrDate || rec.date, arrSource = arr ? "operator" : null;
-  let onOperator = rec.operator, note = null;
+  let onOperator = rec.operator, note = null, hostShip = null;
   if (rec.replacement) {
     const port = PORT_BY_NAME[rec.replacement.port];
     if (port && PORT_COUNTRY[port] === "UK") from = PORT_COUNTRY[rec.from] === "UK" ? port : from, to = PORT_COUNTRY[rec.to] === "UK" ? port : to;
@@ -41,6 +41,7 @@ export function effectiveSailing(data, rec, dated) {
     const host = dated?.sailings?.[`${onOperator}-${from}-${to}|${rec.date}|${dep}`];
     const hostRoute = data.routes.find(r => r.operator === onOperator && r.from === from && r.to === to);
     const pattern = hostRoute?.sailings.find(s => s.dep === dep);
+    if (host) hostShip = host.ship || null;
     if (host && host.arr) { arr = host.arr; arrDate = host.arrDate || rec.date; arrSource = "operator"; }
     else if (pattern) { const m = minutesAt(rec.date, dep) + pattern.durMin; arrDate = addDays(rec.date, Math.floor((hhmm(dep) + pattern.durMin) / 1440)); arr = fmtTime(m); arrSource = "timetable"; }
     else if (rec.arr) { const d = dur(rec.date, rec.dep, rec.arrDate, rec.arr); const m = minutesAt(rec.date, dep) + d; arrDate = addDays(rec.date, Math.floor((hhmm(dep) + d) / 1440)); arr = fmtTime(m); arrSource = "assumed"; }
@@ -48,7 +49,7 @@ export function effectiveSailing(data, rec, dated) {
     note = `${data.operators[rec.operator]?.name || rec.operator} ticket; sails on ${hostName} from ${data.ports[from]?.name || from} at ${dep} (operator notice)`;
   }
   const checkInMin = rec.checkInMin ?? data.routes.find(r => r.id === rec.routeId)?.checkInMin ?? 60;
-  return { from, to, dep, arr, arrDate, arrSource, onOperator, checkInMin, note, moved: !!rec.replacement };
+  return { from, to, dep, arr, arrDate, arrSource, onOperator, checkInMin, note, moved: !!rec.replacement, hostShip };
 }
 function fmtTime(min) { const m = ((min % 1440) + 1440) % 1440; return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`; }
 
@@ -65,8 +66,8 @@ export function datedSailingsFor(data, dated, route, date) {
     const estArr = rec.estimatedArr ? minutesAt(eff.arrDate, rec.estimatedArr) : estDep != null ? estDep + (arrMin - depMin) : null;
     out.push({
       id: `${route.id}|${date}|${rec.dep}`, route, date,
-      sailing: { dep: rec.dep, durMin: arrMin - depMin, vessel: rec.ship || null },
-      vessel: rec.ship || null,
+      sailing: { dep: rec.dep, durMin: arrMin - depMin, vessel: eff.hostShip || rec.ship || null },
+      vessel: eff.hostShip || rec.ship || null, // a moved sailing is on the host operator's ship when we hold its record
       dep: depMin, arr: arrMin, durMin: arrMin - depMin,
       estDep, estArr,
       fromKey: eff.from, toKey: eff.to, checkInMin: eff.checkInMin, onOperator: eff.onOperator,

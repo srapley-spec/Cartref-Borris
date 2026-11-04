@@ -73,8 +73,10 @@ test("a sailing moved onto the other operator: port, time, check-in and crossing
   const eff = effectiveSailing(data, moved, null);
   assert.deepEqual([eff.from, eff.to, eff.dep, eff.arr, eff.arrSource, eff.checkInMin, eff.onOperator], ["FGD", "RSL", "14:00", "17:30", "timetable", 60, "stena"]);
   // With Stena's own dated record for that sailing, its arrival wins.
-  const withHost = dated([moved, rec("stena-FGD-RSL", "2026-11-20", "14:00", "17:40")], ["irish-PEM-RSL|2026-11-20", "stena-FGD-RSL|2026-11-20"]);
+  const withHost = dated([moved, rec("stena-FGD-RSL", "2026-11-20", "14:00", "17:40", { ship: "Stena Nordica" })], ["irish-PEM-RSL|2026-11-20", "stena-FGD-RSL|2026-11-20"]);
   assert.equal(effectiveSailing(data, moved, withHost).arr, "17:40");
+  const hosted = datedSailingsFor(data, withHost, data.routes.find(r => r.id === "irish-PEM-RSL"), "2026-11-20")[0];
+  assert.equal(hosted.vessel, "Stena Nordica"); // the host record's ship, not the Irish Ferries ship named on the ticket
   const [o] = options(data, { dir: "out", date: "2026-11-20", drive: est, dated: dated([moved], ["irish-PEM-RSL|2026-11-20"]), settings }).filter(x => x.id === "irish-PEM-RSL|2026-11-20|14:45");
   assert.equal(o.fromPort, "Fishguard"); assert.equal(fmt(o.dep).time, "14:00"); assert.equal(o.atPortBy, T("2026-11-20", "12:45")); // 14:00 − 60 − 15
   assert.equal(o.driveTo.min, data.driveEstimatesMin["home>FGD"]);
