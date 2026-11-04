@@ -71,7 +71,7 @@
       "operator": "stena",
       "from": "HHD",
       "to": "DUB",
-      "checkInMin": 60,
+      "checkInMin": 30,
       "sources": [
         "https://www.aferry.com/en-gb/holyhead-dublin/",
         "https://www.farminglife.com/country-and-farming/stena-line-has-confirmed-that-ferry-services-from-holyhead-have-resumed-4946118",
@@ -106,14 +106,15 @@
         "source": "AFerry average, car single",
         "on": "2026-11-03",
         "basis": "operator average, 3 Nov"
-      }
+      },
+      "checkInSource": "Stena Line FerryCheck notes, 4 Nov 2026: vehicles' latest check-in"
     },
     {
       "id": "stena-DUB-HHD",
       "operator": "stena",
       "from": "DUB",
       "to": "HHD",
-      "checkInMin": 60,
+      "checkInMin": 30,
       "sources": [
         "https://www.aferry.com/en-gb/dublin-holyhead/",
         "https://www.farminglife.com/country-and-farming/stena-line-has-confirmed-that-ferry-services-from-holyhead-have-resumed-4946118",
@@ -148,7 +149,8 @@
         "source": "AFerry average, car single",
         "on": "2026-11-03",
         "basis": "operator average, 3 Nov"
-      }
+      },
+      "checkInSource": "Stena Line FerryCheck notes, 4 Nov 2026: vehicles' latest check-in"
     },
     {
       "id": "irish-HHD-DUB",
@@ -203,7 +205,8 @@
         "source": "AFerry average, car single",
         "on": "2026-11-03",
         "basis": "operator average, 3 Nov"
-      }
+      },
+      "checkInSource": "Irish Ferries sailing updates: 'Latest check in 30 minutes before departure' (4 Nov 2026)"
     },
     {
       "id": "irish-DUB-HHD",
@@ -259,7 +262,8 @@
         "source": "AFerry average, car single",
         "on": "2026-11-03",
         "basis": "operator average, 3 Nov"
-      }
+      },
+      "checkInSource": "Irish Ferries sailing updates: 'Latest check in 30 minutes before departure' (4 Nov 2026)"
     },
     {
       "id": "stena-FGD-RSL",
@@ -292,14 +296,15 @@
         "source": "AFerry average, car single",
         "on": "2026-11-03",
         "basis": "operator average, 3 Nov"
-      }
+      },
+      "checkInSource": "Stena Line FerryCheck notes, 4 Nov 2026: vehicles' latest check-in"
     },
     {
       "id": "stena-RSL-FGD",
       "operator": "stena",
       "from": "RSL",
       "to": "FGD",
-      "checkInMin": 60,
+      "checkInMin": 30,
       "sources": [
         "https://www.aferry.com/en-gb/rosslare-fishguard/",
         "https://www.directferries.com.au/rosslare_fishguard_ferry.htm"
@@ -325,7 +330,8 @@
         "source": "AFerry average, car single",
         "on": "2026-11-03",
         "basis": "operator average, 3 Nov"
-      }
+      },
+      "checkInSource": "Stena Line FerryCheck notes, 4 Nov 2026: vehicles' latest check-in"
     },
     {
       "id": "irish-PEM-RSL",
@@ -367,7 +373,8 @@
         "source": "AFerry average, car single",
         "on": "2026-11-03",
         "basis": "operator average, 3 Nov"
-      }
+      },
+      "checkInSource": "Irish Ferries sailing updates: 'Latest check in 30 minutes before departure' (4 Nov 2026)"
     },
     {
       "id": "irish-RSL-PEM",
@@ -410,7 +417,8 @@
         "source": "AFerry average, car single",
         "on": "2026-11-03",
         "basis": "operator average, 3 Nov"
-      }
+      },
+      "checkInSource": "Irish Ferries sailing updates: 'Latest check in 30 minutes before departure' (4 Nov 2026)"
     }
   ],
   "excluded": [
@@ -488,5 +496,6 @@
   },
   "fastShips": [
     "Dublin Swift"
-  ]
+  ],
+  "checkInNote": "Vehicle check-in per route from the operators' own pages (4 Nov 2026). Operator notices can override per sailing (e.g. 1 hour when Irish Ferries moves a sailing onto Stena)."
 }

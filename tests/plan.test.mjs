@@ -153,14 +153,14 @@ test("fast ferry: off by default, included only when on and in season", () => {
 });
 
 test("Leave now: only options you can still leave for, earliest arrival first, with countdown", () => {
-  const nowMin = T("2026-11-03", "10:00");
+  const nowMin = T("2026-11-03", "10:30"); // Stena 16:00: at Holyhead by 15:15 (30-min check-in + 15 margin), 285-min drive -> leave 10:30 exactly
   const a = answer(data, { question: "now", dir: "out", nowMin, drive: est, settings });
   assert.ok(a.list.length > 2);
   assert.ok(a.list.every(o => o.leave >= nowMin));
   for (let i = 1; i < a.list.length; i++) assert.ok(a.list[i - 1].arrive <= a.list[i].arrive);
   assert.equal(a.label, "Arrives first");
   assert.equal(a.best.leaveInMin, a.best.leave - nowMin);
-  // Boundary: Stena 16:00 means at Holyhead by 14:45 and leaving at exactly 10:00 (no stops here): still makeable.
+  // Boundary: leaving at exactly now is still makeable; one minute later it has gone.
   assert.equal(a.best.id, "stena-HHD-DUB|2026-11-03|16:00");
   assert.equal(a.best.leaveInMin, 0);
   const later = answer(data, { question: "now", dir: "out", nowMin: nowMin + 1, drive: est, settings });
@@ -216,6 +216,7 @@ test("Cheapest within a question re-ranks the eligible set by price, keeps unpri
 test("countdown wording", () => {
   assert.equal(countdown(212), "leave in 3h 32m");
   assert.equal(countdown(7), "leave in 7 min");
+  assert.equal(countdown(0), "leave now");
   assert.equal(countdown(1440 + 61), "leave in 1 day 1h 01m");
   assert.equal(countdown(-5), "leave time passed 5 min ago");
 });

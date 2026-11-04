@@ -1,0 +1,33 @@
+name: Collect sailing status
+# Operator sailing status (Stena Line FerryCheck, Irish Ferries sailing updates) -> data/sailing-status.json.
+# Cadence: twice an hour. GitHub schedules are best-effort (often minutes late, occasionally skipped), so the app shows
+# when the data was collected and treats anything older than two hours as "status unavailable". To change the
+# cadence edit the cron below; keep it conservative (operators' pages are fetched once each per run: 6 requests).
+on:
+  schedule:
+    - cron: "9,39 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: sailing-status
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/collect-status.mjs
+      - name: Commit if changed
+        run: |
+          if [ -z "$(git status --porcelain -- data/sailing-status.json)" ]; then echo "No change"; exit 0; fi
+          git config user.name "cartref-borris status bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/sailing-status.json
+          git commit -q -m "Sailing status $(date -u +%FT%H:%MZ)" -m "Docs: none — scheduled data refresh."
+          git pull --rebase -q origin main || true
+          git push

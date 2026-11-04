@@ -19,11 +19,15 @@ until they are updated; say so.
 ## Principles
 - **Never hide an option.** Filters apply only on Sam's explicit choice (Day/Night). Unpriced options stay in the
   cost ranking, after the priced ones, flagged "no price yet".
+- **Operators first.** Date-specific sailing times, changes, cancellations and ships come from the operators' own
+  sailing-updates pages via `data/sailing-status.json` (collector `tools/collect-status.mjs`, Action twice hourly). The
+  engine uses those records within their coverage; the timetable pattern in `data/sailings.json` is a labelled estimate
+  outside it. Never treat a failed read or empty parse as "no sailings"; keep the last good data with its own timestamp.
 - **Never present unverified data as fact.** Each route in `data/sailings.json` records how its times were checked
   (`verified.by`: operator or aggregator, and when); the page shows that per option. Re-check with the manual
   "Probe ferry sources" workflow (`tools/probe-sources.mjs`); this session's network can't reach the ferry sites. Drive times from the
   fallback estimates are marked `*`. Prices are only ones Sam entered, dated quotes actually fetched, or fetched averages labelled "typical, not a quote";
-  never invented. `data/fares.json` and `data/ships.json` are written daily by the fares bot; tests must not read them.
+  never invented. `data/fares.json`, `data/ships.json` (daily) and `data/sailing-status.json` (twice hourly) are bot-written; tests must not read them.
 - **Answer the real questions:** when to leave home, which crossing, when you arrive, what it costs.
 - `src/core` is pure: no DOM, network or clock reads; data and drive times are injected.
 - Every time on screen comes from `options()` in `src/core/plan.js`; no timing arithmetic in the page.

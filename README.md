@@ -5,7 +5,8 @@ every Stena Line / Irish Ferries option door to door, ranked by time or by cost.
 
 - Live page (once GitHub Pages is on): https://srapley-spec.github.io/Cartref-Borris/
 - Google key: Settings (bottom of the page). Stored only on the phone. Needs **Routes API** enabled.
-- Timetable is **not yet verified** against the operators; see `docs/architecture.md`.
+- Sailing times and status for the next day or two come from Stena Line's and Irish Ferries' own sailing-updates pages
+  (collected twice an hour by a GitHub Action); further ahead the app uses a timetable pattern and says so.
 
 Start with `CLAUDE.md`. Tests: `npm test`.
 

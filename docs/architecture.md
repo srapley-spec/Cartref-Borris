@@ -9,7 +9,8 @@ cost, filtered on request to day or overnight travel.
 | Layer | File | Does |
 |---|---|---|
 | Data | `data/sailings.json` | Ports, operators, routes, sailing times/durations/days, check-in, fallback drive estimates, sources |
-| Engine (pure) | `src/core/plan.js` | Builds options, overnight classification, filtering, ranking, round-trip summary |
+| Engine (pure) | `src/core/plan.js`, `src/core/dated.js` | Builds options from dated operator records (within coverage) or the timetable pattern; status views; overnight, sleep, filtering, ranking |
+| Status collector | `tools/collect-status.mjs` (+ `irish-status-parse.mjs`, `stena-status-parse.mjs`), Action `status.yml` twice hourly | Operator sailing-status pages → `data/sailing-status.json` with per-route/date coverage and failure retention |
 | Adapter | `src/google.js` | Google Routes API `computeRoutes` from the browser (traffic-aware, future departure time) |
 | Page | `src/app.js`, `index.html` | Signal layout (from Cartref Commute), questions, settings, fares entry, drive-time fetch + cache, drawing |
 | Ships seen | `data/ships.json`, written daily by `tools/fetch-fares.mjs` | Ship per Irish Ferries sailing time; Dublin Swift last seen |
@@ -26,7 +27,14 @@ For a sailing departing `dep` with crossing `durMin` and operator check-in `chec
 - **Overnight** = any part of the door-to-door journey falls between 00:00 and 05:00 (leaving home at 02:00 for
   a 07:30 boat is overnight travel even though the crossing is in daylight).
 
-## Data sources and how verified they are (3 Nov 2026)
+## Primary source: the operators' own sailing updates (4 Nov 2026)
+Stena Line's FerryCheck boards (`stenalineferrycheck.azurewebsites.net/RouteInfo/details?id=6/5/8/7`, today and
+tomorrow) and Irish Ferries' sailing-updates pages (`ie-en/sailing-updates/dublin-holyhead`, `rosslare-pembroke`,
+yesterday to day after tomorrow) are read by `tools/collect-status.mjs` on GitHub's runner (all six return 200 to a
+plain fetch; no CAPTCHA observed; nothing is disguised). Within their coverage the dated records are the sailings the
+planner uses; outside it the timetable pattern below is a labelled estimate. See [operator status](stories/operator-status.md).
+
+## Timetable pattern and how verified it is (3 Nov 2026)
 - **Sailings: checked 3 Nov 2026** by `tools/probe-sources.mjs`, run on GitHub's runner (manual workflow
   "Probe ferry sources"; the build session's network blocks these hosts). Irish Ferries routes match Irish Ferries'
   own sailing-updates status tables; all routes match AFerry's per-date departure lists. Stena's pages carry no times
@@ -80,8 +88,19 @@ For a sailing departing `dep` with crossing `durMin` and operator check-in `chec
 - **4 Nov 2026** Live AFerry prices via a Cloudflare Worker (Sam approved trying the booking search). Plain requests,
   honest client identity; Stena's Turnstile-protected site is not touched ([fares story](stories/fares.md)).
 
+- **4 Nov 2026** Operators are the primary source for date-specific sailings and status (Sam's brief). Dated records
+  keyed by route|date|original time; coverage per route/date; failed reads keep previous data with its own timestamp;
+  cancelled sailings visible but unavailable; delay estimates move the arrival, never check-in; moved sailings take the
+  replacement port/time/check-in. Status colours per Sam: on time green, <1 h yellow, ≥1 h or no estimate amber,
+  cancelled red; stale (>2 h) or missing status is neutral. Operator check-in rules replace the assumed 60 min
+  (Stena vehicles 30/30/60/30). Irish Ferries Dublin–Holyhead notices show its ticketed times are 02:40/08:15/14:10/20:15
+  and 02:00/08:05/14:30/20:55 with daily "Early Sailing" to the displayed times; records keep both.
+- **4 Nov 2026** The Thursday 02:45 Pembroke sailing is on Irish Ferries' page though the weekday pattern (from Direct
+  Ferries) omits it: dated records override; the collector lists such cases under `unscheduled` for data maintenance.
+
 ## Known gaps / next
-1. Confirm Stena times from Stena itself and the day-of-week patterns; re-run the probe when timetables change.
+1. Timetable pattern (future dates): confirm Stena's pattern from Stena; fix day-of-week patterns using `unscheduled` from the collector.
+1b. Collector cadence is GitHub-scheduled (best effort). For dependable frequent updates move it to a scheduled backend with monitoring; confirm the operators' permitted automated use.
 2. Measure the fallback drive estimates with Google (needs `GOOGLE_MAPS_KEY` in the environment).
 3. Live any-date fares (booking-engine automation) only if Sam agrees; return-fare vs two-singles pricing; cabin costs on overnight sailings.
 4. Booking links go to operator home pages; deep links with dates are unverified.

@@ -27,7 +27,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); server?.close(); });
 
-async function openPage({ google, fares, ships } = {}) {
+async function openPage({ google, fares, ships, status } = {}) {
   const ctx = await browser.newContext({ timezoneId: "Europe/London" });
   const page = await ctx.newPage();
   page.on("pageerror", e => console.error("pageerror:", e.message));
@@ -39,6 +39,7 @@ async function openPage({ google, fares, ships } = {}) {
     await route.fulfill(google ? google(calls.at(-1)) : { status: 500, body: "no" });
   });
   // data/fares.json is refreshed daily by a bot; tests never read the live file.
+  await page.route("**/data/sailing-status.json", (route) => route.fulfill(status ? { status: 200, contentType: "application/json", body: JSON.stringify(status) } : { status: 404, body: "" }));
   await page.route("**/data/ships.json", (route) => route.fulfill(ships ? { status: 200, contentType: "application/json", body: JSON.stringify(ships) } : { status: 404, body: "" }));
   await page.route("**/data/fares.json", (route) => route.fulfill(fares ? { status: 200, contentType: "application/json", body: JSON.stringify(fares) } : { status: 404, body: "" }));
   await page.goto(base);
@@ -62,19 +63,20 @@ test("Leave now (default): Signal card with Leave by → At Borris, Total journe
   assert.match(await page.textContent("#hero .hero-cap"), /If you leave now · 10:00/);
   const best = page.locator("#hero > .opt").first();
   const text = await best.textContent();
-  // 19:30 − 30 check-in − 15 margin = 18:45; − 285 drive − 30 (1 stop, the default) = 13:30.
-  assert.match(text, /Leave by\s*13:30/); assert.match(text, /At Borris/);
-  assert.match(text, /Total journey \d+h \d\dm/); assert.match(text, /leave in 3h 30m/);
+  // Stena 16:00: 16:00 − 30 check-in (Stena's page) − 15 margin = 15:15; − 285 drive − 30 (1 stop, the default) = 10:00 = now.
+  assert.match(text, /Leave by\s*10:00/); assert.match(text, /At Borris/);
+  assert.match(text, /Total journey \d+h \d\dm/); assert.match(text, /leave now/);
   assert.match(text, /Arrives first/);
-  assert.match(text, /Next: 19:30 Irish Ferries from Holyhead/);
-  assert.match(text, /Timetable departure\s*19:30/); assert.match(text, /Expected departure\s*Not live/); assert.match(text, /At Dublin Port\s*23:00/);
-  assert.equal(await best.locator(".op img").getAttribute("alt"), "Irish Ferries");
+  assert.match(text, /Next: 16:00 Stena Line from Holyhead/);
+  assert.match(text, /Timetable departure\s*16:00/); assert.match(text, /Expected departure\s*Not live/); assert.match(text, /At Dublin Port\s*19:30/);
+  assert.match(text, /Timetable estimate/); // no operator status file in this test
+  assert.equal(await best.locator(".op img").getAttribute("alt"), "Stena Line");
   assert.ok(await best.locator(".op img").evaluate(i => i.complete && i.naturalWidth > 0), "logo loads");
   assert.match(await page.textContent("#hero .next-best"), /Next best[\s\S]*Leave by/);
   // No fares/ships files in this test: those sources say "never updated" and the banner asks for a check.
-  assert.equal((await page.textContent("#banner")).replace(/\s+/g, " ").trim(), "Ferry times checked today · Prices never updated · Ships never updated · Drive times: estimates Check before booking.");
-  assert.match(text, /Times checked with Irish Ferries Tue 3 Nov/);
-  assert.match(text, /~£163\s*typical, not a quote \(AFerry operator average, 3 Nov\)/);
+  assert.equal((await page.textContent("#banner")).replace(/\s+/g, " ").trim(), "Ferry times checked today · Prices never updated · Ships never updated · Sailing status never updated · Drive times: estimates Check before booking.");
+  assert.match(text, /Times via AFerry Tue 3 Nov/);
+  assert.match(text, /~£174\s*typical, not a quote \(AFerry operator average, 3 Nov\)/);
   assert.match(await page.textContent("#status"), /No Google key/);
   await ctx.close();
 });
@@ -162,7 +164,7 @@ test("with a Google key: legs requested with key header and future departure tim
   assert.ok(calls.length > 0);
   assert.equal(calls[0].headers["x-goog-api-key"], "test-key-not-real");
   assert.match(calls[0].headers["x-goog-fieldmask"], /routes\.duration/);
-  assert.ok(calls.every(c => Date.parse(c.body.departureTime) > NOW));
+  assert.ok(calls.every(c => !c.body.departureTime || Date.parse(c.body.departureTime) > NOW)); assert.ok(calls.some(c => c.body.departureTime));
   assert.ok(calls.some(c => /SG6 3LT/.test(c.body.origin.address)));
   assert.match(await page.textContent("#hero .drive-leg"), /Drive 4h 50m incl\. 1 stop \(30 min\) to/);
   assert.match(calls[0].headers["x-goog-fieldmask"], /navigationInstruction/);
@@ -204,12 +206,13 @@ test("Fetched fares: an AFerry quote prices its exact sailing; others show the m
 
 test("Without Google, each drive shows typical roads (labelled unchecked) in sign colours; ship type and name shown", async () => {
   const { page, ctx } = await openPage();
-  const best = page.locator("#hero > .opt").first(); // Irish Ferries 19:30 Holyhead (James Joyce)
+  const best = page.locator("#hero > .opt").first(); // Stena 16:00 Holyhead
+  const irish = page.locator('.opt[data-id="irish-HHD-DUB|2026-11-03|19:30"]'); // James Joyce
   const out = best.locator(".drive-leg").nth(0), irl = best.locator(".drive-leg").nth(1);
   assert.deepEqual(await out.locator(".road").allTextContents(), ["A1(M)", "A14", "M6", "M56", "A55"]);
   assert.match(await out.textContent(), /typical roads, unchecked/);
   assert.deepEqual(await irl.locator(".road").evaluateAll(els => els.map(e => e.className)), ["road road-m ie", "road road-m ie"]);
-  assert.match(await best.locator(".ship").textContent(), /Standard ferry · James Joyce/);
+  assert.match(await irish.locator(".ship").textContent(), /Standard ferry · James Joyce/);
   assert.match(await best.locator(".tags").textContent(), /Standard ferry/);
   await ctx.close();
 });
@@ -229,7 +232,7 @@ test("Ship sightings: the observed ship is shown; the fast-ferry note says wheth
   const ships = { watchingSince: "2026-11-04", fastShipsSeen: { "Dublin Swift": null },
     sailings: { "irish-HHD-DUB|19:30": { ship: "Ulysses", seenOn: "2026-11-04" } } };
   const { page, ctx } = await openPage({ ships });
-  assert.match(await page.locator("#hero > .opt .ship").first().textContent(), /Standard ferry · Ulysses/); // stored: James Joyce
+  assert.match(await page.locator('.opt[data-id="irish-HHD-DUB|2026-11-03|19:30"] .ship').textContent(), /Standard ferry · Ulysses/); // stored: James Joyce
   assert.match(await page.textContent("#fastNote"), /Dublin Swift not seen on Irish Ferries' status pages since Wed 4 Nov; its times here are from memory\./);
   await ctx.close();
   const seen = await openPage({ ships: { ...ships, fastShipsSeen: { "Dublin Swift": "2026-11-02" } } });
@@ -242,15 +245,16 @@ test("Data sources: each source shows when it was last updated; out-of-date ones
   const ships = { updatedOn: "2026-11-02", sailings: {}, fastShipsSeen: {} };      // yesterday: fresh
   const { page, ctx } = await openPage({ fares, ships });
   const banner = (await page.textContent("#banner")).replace(/\s+/g, " ").trim();
-  assert.equal(banner, "Ferry times checked today · Prices updated 4 days ago · Ships updated yesterday · Drive times: estimates Check before booking.");
-  assert.deepEqual(await page.locator("#banner .stale").allTextContents(), ["Prices updated 4 days ago", "Check before booking."]);
+  assert.equal(banner, "Ferry times checked today · Prices updated 4 days ago · Ships updated yesterday · Sailing status never updated · Drive times: estimates Check before booking.");
+  assert.deepEqual(await page.locator("#banner .stale").allTextContents(), ["Prices updated 4 days ago", "Sailing status never updated", "Check before booking."]);
   const rows = await page.locator("#sources .src-row").allTextContents();
-  assert.equal(rows.length, 4);
+  assert.equal(rows.length, 5);
   assert.match(rows[0], /Ferry times\s*checked Tue 3 Nov \(today\)/);
   assert.match(rows[1], /Prices\s*updated Fri 30 Oct \(4 days ago\) · out of date/);
   assert.match(rows[2], /Ships\s*updated Mon 2 Nov \(yesterday\)/);
-  assert.match(rows[3], /Drive times\s*never updated[\s\S]*No Google key/);
-  assert.equal(await page.locator("#sources .src-row.stale").count(), 1);
+  assert.match(rows[3], /Sailing status\s*never updated · out of date[\s\S]*No operator status collected yet/);
+  assert.match(rows[4], /Drive times\s*never updated[\s\S]*No Google key/);
+  assert.equal(await page.locator("#sources .src-row.stale").count(), 2);
   await ctx.close();
 });
 
@@ -278,5 +282,54 @@ test("Live prices via the proxy: searches for the date on screen; live prices be
   const n = asked.length;
   await page.reload(); await page.waitForSelector("#hero .opt"); await page.waitForTimeout(300);
   assert.equal(asked.length, n, "cached for an hour: no new searches on reload");
+  await ctx.close();
+});
+
+test("Operator status lozenges: on time green, short delay yellow, long delay amber, cancelled red (visible, last, struck through), moved sailing, stale and no-record states", async () => {
+  const rec = (routeId, date, dep, arr, extra = {}) => { const [op, from, to] = routeId.split("-"); return { operator: op, routeId, from, to, date, dep, arr, arrDate: date, ship: "Test Ship",
+    statusLabel: "On Time", status: "on-time", notice: null, originalDep: null, revisedDep: null, estimatedDep: null, replacement: null, checkInMin: null, source: "t", fetchedAt: "2026-11-03T09:30:00.000Z", ...extra }; };
+  const recs = [
+    rec("stena-HHD-DUB", "2026-11-10", "16:00", "19:30"),
+    rec("irish-HHD-DUB", "2026-11-10", "13:15", "16:45", { status: "delayed", statusLabel: "Delayed", estimatedDep: "13:55" }),
+    rec("irish-HHD-DUB", "2026-11-10", "19:30", "23:00", { status: "delayed", statusLabel: "Delayed", estimatedDep: "21:00", notice: "Delayed by weather. Latest check-in time is 30 minutes before departure." }),
+    rec("irish-HHD-DUB", "2026-11-10", "07:30", "11:00", { status: "cancelled", statusLabel: "Cancelled", notice: "Cancelled due to adverse weather." }),
+    rec("irish-PEM-RSL", "2026-11-10", "14:45", "18:46", { replacement: { operator: "stena", port: "Fishguard" }, revisedDep: "14:00", checkInMin: 60, notice: "Will now be on the StenaLine sailing from Fishguard at the earlier departure time of 14:00." }),
+    rec("stena-FGD-RSL", "2026-11-10", "14:00", "17:30", { fetchedAt: "2026-11-03T06:00:00.000Z" }),
+  ];
+  const cov = (k, at = "2026-11-03T09:30:00.000Z") => [k, { fetchedAt: at, source: "t" }];
+  const status = { schema: 1, collectedAt: "2026-11-03T09:30:00.000Z", complete: true,
+    sources: { t: { ok: true, fetchedAt: "2026-11-03T09:30:00.000Z", operator: "stena", routeIds: ["x"], lastGoodAt: "2026-11-03T09:30:00.000Z" } },
+    coverage: Object.fromEntries([cov("stena-HHD-DUB|2026-11-10"), cov("irish-HHD-DUB|2026-11-10"), cov("irish-PEM-RSL|2026-11-10"), cov("stena-FGD-RSL|2026-11-10", "2026-11-03T06:00:00.000Z")]),
+    sailings: Object.fromEntries(recs.map(r => [`${r.routeId}|${r.date}|${r.dep}`, r])) };
+  const { page, ctx } = await openPage({ status });
+  await seg(page, "questionSeg", "fastest");
+  const lz = async (id) => { const el = page.locator(`.opt[data-id="${id}"] .status-lz`); return [await el.textContent(), (await el.getAttribute("class")).replace("status-lz ", "")]; };
+  assert.deepEqual(await lz("stena-HHD-DUB|2026-11-10|16:00"), ["On time", "lvl-ok"]);
+  assert.deepEqual(await lz("irish-HHD-DUB|2026-11-10|13:15"), ["Delayed 40 min", "lvl-caution"]);
+  assert.deepEqual(await lz("irish-HHD-DUB|2026-11-10|19:30"), ["Delayed 1h 30m", "lvl-warn"]);
+  assert.deepEqual(await lz("irish-HHD-DUB|2026-11-10|07:30"), ["Cancelled", "lvl-bad"]);
+  assert.match((await lz("irish-PEM-RSL|2026-11-10|14:45"))[0], /moved to Stena Line from Fishguard 14:00/);
+  assert.equal((await lz("irish-PEM-RSL|2026-11-10|14:45"))[1], "lvl-caution");
+  assert.match((await lz("stena-FGD-RSL|2026-11-10|14:00"))[0], /^Status unavailable/); // read 06:00, now 10:00: older than 2 h
+  // Expected column: estimate in colour when delayed; "On time"; "Cancelled"; "Not live" for a timetable estimate.
+  const expected = async (id) => page.locator(`.opt[data-id="${id}"] .leg-cols > div:nth-child(2) .legbig`).textContent();
+  assert.equal(await expected("irish-HHD-DUB|2026-11-10|19:30"), "21:00");
+  assert.equal(await expected("stena-HHD-DUB|2026-11-10|16:00"), "On time");
+  assert.equal(await expected("irish-HHD-DUB|2026-11-10|07:30"), "Cancelled");
+  assert.equal(await expected("stena-HHD-DUB|2026-11-11|04:00"), "Not live"); // next day: no coverage -> timetable estimate
+  assert.match(await page.locator('.opt[data-id="stena-HHD-DUB|2026-11-11|04:00"] .leg-status').textContent(), /Timetable estimate/);
+  // Delay recalculates the arrival home and shows the timetable arrival; check-in time unchanged.
+  const late = page.locator('.opt[data-id="irish-HHD-DUB|2026-11-10|19:30"]');
+  assert.match(await late.textContent(), /At Borris \(expected\)\s*02:30[\s\S]*timetable 01:00/); // 21:00+3h30 = 00:30, +20 off, +1h40 drive
+  assert.match(await late.textContent(), /Check-in closes 19:00/);
+  // Cancelled: still listed, never best, struck through, last.
+  const ids = await page.$$eval("#hero .opt, #list .opt", els => els.map(e => e.dataset.id));
+  assert.ok(ids.includes("irish-HHD-DUB|2026-11-10|07:30")); assert.notEqual(ids[0], "irish-HHD-DUB|2026-11-10|07:30"); assert.equal(ids.at(-1), "irish-HHD-DUB|2026-11-10|07:30");
+  assert.ok(await page.locator('.opt[data-id="irish-HHD-DUB|2026-11-10|07:30"]').evaluate(e => e.classList.contains("unavailable")));
+  // Moved sailing: leaves from Fishguard at 14:00 with Stena's crossing and a 60-minute check-in.
+  const moved = page.locator('.opt[data-id="irish-PEM-RSL|2026-11-10|14:45"]');
+  assert.match(await moved.textContent(), /Ferry from Fishguard → Rosslare Europort[\s\S]*Timetable departure\s*14:00[\s\S]*Check-in closes 13:00/);
+  // Data sources row says when status was collected.
+  assert.match(await page.textContent("#sources"), /Sailing status\s*collected Tue 3 Nov \(today\)/);
   await ctx.close();
 });

@@ -4,6 +4,7 @@ import { answer, options, byPreference, summary, makeDrive, fmt, duration, count
 import { driveMinutes, bucket, utcMsToLocalMin } from "./google.js";
 import { freshness, timetableCheckedOn, STALE_AFTER_DAYS } from "./core/freshness.js";
 import { priceSearches, mapLiveRows } from "./core/prices.js";
+import { statusView, STATUS_STALE_MIN } from "./core/dated.js";
 
 const LS = { settings: "cb.settings.v1", fares: "cb.fares.v1", drive: "cb.drive.v1", form: "cb.form.v2", live: "cb.live.v1" };
 export const LIVE_TTL_MS = 60 * 60000; // live prices are re-searched after an hour
@@ -19,6 +20,10 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   let shipData = { sailings: {}, fastShipsSeen: {} };
   try { const r = await fetchFn("data/ships.json"); if (r.ok) shipData = { sailings: {}, fastShipsSeen: {}, ...(await r.json()) }; } catch { /* none yet */ }
   const ships = shipData.sailings;
+  // Operator sailing status (dated records + coverage), collected by .github/workflows/status.yml. Same-origin file.
+  let dated = null;
+  try { const r = await fetchFn("data/sailing-status.json"); if (r.ok) dated = await r.json(); } catch { /* none yet */ }
+  const statusFetchedMin = (o) => { const c = dated?.coverage?.[`${o.record?.routeId}|${o.record?.date}`]; return c?.fetchedAt ? utcMsToLocalMin(Date.parse(c.fetchedAt)) : null; };
   let fareData = { quotes: {}, routes: {} };
   try { const r = await fetchFn("data/fares.json"); if (r.ok) fareData = { quotes: {}, routes: {}, ...(await r.json()) }; } catch { /* none yet */ }
   // Typical price for a sailing: AFerry's 12-month average for that route and month, else its operator average.
@@ -92,9 +97,25 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
         detail: fareData.fetchedOn ? `${state.settings.proxyUrl ? "Live AFerry searches for the dates on screen (re-searched after an hour); " : ""}AFerry: ${quotes} dated price${quotes === 1 ? "" : "s"} for specific sailings, plus monthly typical prices, refreshed daily.` : "No fetched prices yet." },
       { key: "ships", label: "Ships", verb: "updated", updatedOn: shipData.updatedOn || null,
         detail: shipData.updatedOn ? "Which ship ran each Irish Ferries sailing, from its status pages. Refreshed daily." : "Not yet recorded." },
+      { key: "status", label: "Sailing status", verb: "collected", updatedOn: statusUpdatedAt(),
+        detail: statusDetail() },
       { key: "drive", label: "Drive times", verb: "updated", optional: true, updatedOn: state.settings.googleKey && driveAts.length ? driveAts.at(-1) : null,
         detail: state.settings.googleKey ? "Google Routes with traffic for each departure time; kept up to 7 days." : "No Google key: rough estimates without traffic (marked “estimate”)." },
     ], today);
+  }
+  function statusUpdatedAt() {
+    const good = Object.values(dated?.sources || {}).map(x => x.fetchedAt).filter(Boolean).sort();
+    return good.at(-1) || null;
+  }
+  function statusDetail() {
+    if (!dated) return "No operator status collected yet.";
+    const src = Object.values(dated.sources || {});
+    const failed = src.filter(x => !x.ok);
+    const at = (iso) => iso ? `${niceDate(iso.slice(0, 10))} ${clock(iso)}` : "never";
+    const parts = [`Stena Line FerryCheck boards and Irish Ferries sailing updates, collected ${at(dated.collectedAt)}${dated.complete ? "" : " (incomplete)"}.`];
+    if (failed.length) parts.push(`Not reachable last time: ${failed.map(x => `${x.operator === "stena" ? "Stena" : "Irish Ferries"} ${x.routeIds.join("/")} (last good ${at(x.lastGoodAt)})`).join("; ")}.`);
+    parts.push("Operators do not publish an update time on these pages; the time shown is when we read them. Status older than 2 hours is shown as unavailable.");
+    return parts.join(" ");
   }
   function drawSources() {
     const list = sources();
@@ -155,11 +176,11 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   function question(dir, drive, extra = {}) {
     const date = dir === "out" ? form.out : (form.back || form.out);
     return answer(data, { question: form.question, dir, nowMin: nowMin(), date, time: dir === "out" ? form.outTime : form.backTime,
-      pref: form[dir === "out" ? "outPref" : "backPref"], sort: form.sort, drive, fares: allFares(), typical, ships, settings: state.settings, ...extra });
+      pref: form[dir === "out" ? "outPref" : "backPref"], sort: form.sort, drive, fares: allFares(), typical, ships, dated, settings: state.settings, ...extra });
   }
   function roundTrip(drive) {
     if (!form.back) return null;
-    const mk = (dir, date, pref) => byPreference(options(data, { dir, date, drive, fares: allFares(), typical, ships, settings: state.settings }), pref);
+    const mk = (dir, date, pref) => byPreference(options(data, { dir, date, drive, fares: allFares(), typical, ships, dated, settings: state.settings }), pref);
     return summary(mk("out", form.out, form.outPref), mk("back", form.back, form.backPref));
   }
 
@@ -210,15 +231,17 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
       fastest: `Fastest door to door · leaving ${niceDate(date || form.out)}`,
     }[form.question];
     const noBack = form.dir === "back" && !form.back && form.question !== "now";
+    const nm = nowMin();
+    const viewFor = (o) => statusView(o.record || null, { nowMin: nm, fetchedAtMin: statusFetchedMin(o), staleAfterMin: STATUS_STALE_MIN });
     $("#hero").innerHTML = noBack ? `<p class="empty">Set a date to leave Borris in Journey options.</p>`
       : !a.best ? `<p class="empty">No crossings match. Try “Day or night”, another time or date${state.settings.fastFerry ? "" : ", or turn on the fast ferry"}.</p>`
       : `<div class="hero-cap">${esc(caption)}</div>${a.leastLate ? `<div class="banner-inline">Nothing arrives by then. Least late shown first.</div>` : ""}
-         ${card(a.best, { dir: form.dir, label: a.label })}
-         ${a.next ? `<div class="next-best"><h3>Next best</h3>${card(a.next, { dir: form.dir })}</div>` : ""}`;
-    const rest = noBack ? [] : a.list.slice(2);
+         ${card(a.best, { dir: form.dir, label: a.label, status: viewFor(a.best) })}
+         ${a.next ? `<div class="next-best"><h3>Next best</h3>${card(a.next, { dir: form.dir, status: viewFor(a.next) })}</div>` : ""}`;
+    const rest = noBack ? [] : a.list.filter(o => o !== a.best && o !== a.next);
     $("#listTitle").hidden = !rest.length;
     $("#listTitle").textContent = `All other options · ${rest.length}`;
-    $("#list").innerHTML = rest.map(o => card(o, { dir: form.dir, compact: true })).join("");
+    $("#list").innerHTML = rest.map(o => card(o, { dir: form.dir, compact: true, status: viewFor(o) })).join("");
     const rt = roundTrip(drive);
     $("#roundTrip").innerHTML = rt ? roundTripHtml(rt) : "";
     drawStatus(); drawSources();
@@ -276,6 +299,7 @@ function driveLeg(d, where) {
   return `<div class="drive-leg"><span class="dl">Drive ${esc(driveText(d))} ${esc(where)}</span>${roads}</div>`;
 }
 function timesSource(o) {
+  if (o.source === "operator") return ` · Times from ${o.record.operator === "stena" ? "Stena Line" : "Irish Ferries"} for this date`;
   if (!o.verified) return ` · <span class="unverified">Timetable unverified</span>`;
   const on = o.verifiedOn ? ` ${esc(niceDate(o.verifiedOn))}` : "";
   return o.verifiedBy === "operator" ? ` · Times checked with ${esc(o.operator)}${on}` : ` · Times via AFerry${on}`;
@@ -284,8 +308,9 @@ function driveText(d) {
   return `${duration(d.min)}${d.stops ? ` incl. ${d.stops} stop${d.stops > 1 ? "s" : ""} (${duration(d.stopsMin)})` : ""}${d.source === "estimate" ? " (estimate)" : ""}`;
 }
 
-export function card(o, { dir, label, compact }) {
+export function card(o, { dir, label, compact, status }) {
   const [startName, endName] = dir === "out" ? ["home", "Borris"] : ["Borris", "home"];
+  const sv = status || statusView(o.record || null);
   const checkInCloses = o.dep - o.checkInMin;
   const steps = [
     [o.leave, `Leave ${startName}`],
@@ -297,24 +322,26 @@ export function card(o, { dir, label, compact }) {
     [o.arrive, `At ${endName}`],
   ];
   return `
-  <article class="opt${compact ? " compact" : ""}" data-id="${esc(o.id)}">
+  <article class="opt${compact ? " compact" : ""}${o.unavailable ? " unavailable" : ""}" data-id="${esc(o.id)}">
     <div class="optrow">
       <div><small>Leave by</small><span class="optbig">${t(o.leave)}</span><small class="nd">${esc(niceDate(fmt(o.leave).date))}</small></div>
       <div class="optarrow" aria-hidden="true">→</div>
-      <div><small>At ${endName}</small><span class="optbig arrive">${t(o.arrive)}</span>${dayNote(o.arrive, o.leave)}</div>
+      <div><small>At ${endName}${o.estArr != null ? " (expected)" : ""}</small><span class="optbig arrive${o.estArr != null ? " lvl-warn" : ""}">${t(o.arrive)}</span>${dayNote(o.arrive, o.leave)}${o.estArr != null ? `<small class="nd">timetable ${t(o.scheduledArrive)}</small>` : ""}</div>
     </div>
     <div class="journey-facts"><span class="journey-total-time">Total journey ${duration(o.totalMin)}</span><span class="journey-train-time">${duration(o.crossingMin)} crossing${o.fast ? " · fast ferry" : ""}</span></div>
     ${o.leaveInMin != null ? `<div class="journey-countdown">${esc(countdown(o.leaveInMin))}</div>` : ""}
-    <div class="tags">${label ? `<span class="tag best">${esc(label)}</span>` : ""}<span class="tag">${o.overnight ? "Overnight" : "Daytime"}</span><span class="tag ship-tag">${esc(o.shipType)}</span>${o.sleepMin ? `<span class="tag sleep">Sleep ~${duration(o.sleepMin)} on board</span>` : ""}${o.nightDriveMin ? `<span class="tag night-drive">Driving ${duration(o.nightDriveMin)} between midnight and 5am</span>` : ""}</div>
+    <div class="tags">${o.unavailable ? `<span class="tag lvl-bad">Cancelled</span>` : ""}${label ? `<span class="tag best">${esc(label)}</span>` : ""}<span class="tag">${o.overnight ? "Overnight" : "Daytime"}</span><span class="tag ship-tag">${esc(o.shipType)}</span>${o.sleepMin ? `<span class="tag sleep">Sleep ~${duration(o.sleepMin)} on board</span>` : ""}${o.nightDriveMin ? `<span class="tag night-drive">Driving ${duration(o.nightDriveMin)} between midnight and 5am</span>` : ""}</div>
     <div class="next-svc"><b>Next: ${t(o.dep)} ${esc(o.operator)}</b> from ${esc(o.fromPort)}</div>
     <div class="leg-panel">
       <div class="leg-head">${opBadge(o)} <span>Ferry from ${esc(o.fromPort)} → ${esc(o.toPort)}</span></div>
       <div class="ship"><b>${esc(o.shipType)}</b>${o.vessel ? ` · ${esc(o.vessel)}` : ""}</div>
       <div class="leg-cols">
         <div><small>Timetable departure</small><span class="legbig">${t(o.dep)}</span></div>
-        <div><small>Expected departure</small><span class="legbig muted">Not live</span></div>
+        <div><small>Expected departure</small>${/^\d\d:\d\d$/.test(sv.expected || "") ? `<span class="legbig lvl-${sv.level}">${esc(sv.expected)}</span>` : `<span class="legbig muted">${esc(sv.expected || "Not live")}</span>`}</div>
         <div><small>At ${esc(o.toPort)}</small><span class="legbig">${t(o.arr)}</span>${dayNote(o.arr, o.dep)}</div>
       </div>
+      <div class="leg-status"><span class="status-lz lvl-${sv.level}">${esc(sv.label)}</span>${o.record ? `<small>${o.record.operator === "stena" ? "Stena Line" : "Irish Ferries"} status, read ${esc(clock(o.record.fetchedAt))}</small>` : `<small>no operator status for this date</small>`}</div>
+      ${o.record && sv.detail && sv.detail !== sv.label && sv.kind !== "on-time" ? `<div class="leg-notice">${esc(sv.detail)}</div>` : ""}
       <div class="leg-meta">Check-in closes <b>${t(checkInCloses)}</b> · be there by ${t(o.atPortBy)}${o.vessel ? ` · ${esc(o.vessel)}` : ""}${timesSource(o)}</div>
     </div>
     ${driveLeg(o.driveTo, `to ${o.fromPort}`)}

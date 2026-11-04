@@ -9,6 +9,7 @@
 export const OVERNIGHT_WINDOW = { start: 0, end: 5 * 60 };
 // Leave around: options leaving from 60 min before to 180 min after the chosen time.
 export const AROUND_WINDOW = { before: 60, after: 180 };
+import { datedSailingsFor } from "./dated.js";
 
 const DAY = 24 * 60;
 
@@ -68,12 +69,23 @@ export function inSeason(season, dateISO) {
 }
 
 /** All concrete sailings in a direction departing on the given dates. dir: "out" (UK->IE) | "back". */
-export function sailingsOn(data, dir, dates, { fastFerry = false } = {}, ships = null) {
+export function sailingsOn(data, dir, dates, { fastFerry = false } = {}, ships = null, dated = null) {
   const out = [];
   for (const route of data.routes) {
     const ukFirst = data.ports[route.from].country === "UK";
     if ((dir === "out") !== ukFirst) continue;
     for (const date of dates) {
+      // Within the operator's verified coverage, the dated records are the sailings for that date (revised times,
+      // cancellations, extra or missing sailings, the ship that actually runs). Outside it, the timetable pattern.
+      const datedList = datedSailingsFor(data, dated, route, date);
+      if (datedList) {
+        for (const d of datedList) {
+          const fast = (data.fastShips || []).includes(d.vessel);
+          if (fast && !fastFerry) continue;
+          out.push({ ...d, fast });
+        }
+        continue;
+      }
       const base = dayStart(date), dow = fmt(base).dow;
       for (const s of route.sailings) {
         // Fast ferry is identified by the ship on the timetable (Sam, 4 Nov: "the fast boat is called the Dublin Swift").
@@ -84,7 +96,7 @@ export function sailingsOn(data, dir, dates, { fastFerry = false } = {}, ships =
         if (s.days && !s.days.includes(dow)) continue;
         if (!inSeason(s.season ?? route.season, date)) continue;
         const dep = base + hhmm(s.dep);
-        out.push({ id: `${route.id}|${date}|${s.dep}`, route, sailing: s, vessel, fast, dep, arr: dep + s.durMin, durMin: s.durMin });
+        out.push({ id: `${route.id}|${date}|${s.dep}`, route, date, sailing: s, vessel, fast, dep, arr: dep + s.durMin, durMin: s.durMin, source: "timetable", fromKey: route.from, toKey: route.to, checkInMin: route.checkInMin, estDep: null, estArr: null, cancelled: false, record: null });
       }
     }
   }
@@ -99,33 +111,38 @@ export function sailingsOn(data, dir, dates, { fastFerry = false } = {}, ships =
  * typical(routeKey "PEM-RSL", operatorKey, sailDateISO) -> { amount, basis } | null: injected average price (shown,
  * and used only to order options that have no quote; never presented as a quote).
  */
-export function options(data, { dir, date, dates, drive, fares = {}, typical = null, ships = null, settings }) {
+export function options(data, { dir, date, dates, drive, fares = {}, typical = null, ships = null, dated = null, settings }) {
   const leaveDates = dates || [date];
   const start = dir === "out" ? "home" : "dest", end = dir === "out" ? "dest" : "home";
   const stopTotal = (settings.stops || 0) * (settings.stopMin || 0);
   const sailDates = [...new Set(leaveDates.flatMap(d => [d, addDays(d, 1)]))];
   const days = leaveDates.map(dayStart);
   const result = [];
-  for (const s of sailingsOn(data, dir, sailDates, settings, ships)) {
+  for (const s of sailingsOn(data, dir, sailDates, settings, ships, dated)) {
     const r = s.route;
     const ukLeg = dir === "out" ? "to" : "from";
-    const atPortBy = s.dep - r.checkInMin - settings.marginMin;
+    const fromKey = s.fromKey, toKey = s.toKey, checkInMin = s.checkInMin;
+    // Check-in is against the scheduled departure; an operator delay never permits later check-in.
+    const atPortBy = s.dep - checkInMin - settings.marginMin;
     const toStops = ukLeg === "to" ? stopTotal : 0, fromStops = ukLeg === "from" ? stopTotal : 0;
     // Guess the departure from the estimate, then ask for the drive at that time.
-    const guess = drive(start, r.from, null);
-    const toBase = drive(start, r.from, atPortBy - guess.min - toStops);
+    const guess = drive(start, fromKey, null);
+    const toBase = drive(start, fromKey, atPortBy - guess.min - toStops);
     const stops = settings.stops || 0;
     const roadsOf = (b, from, to) => (b.roads && b.roads.length ? { list: b.roads, source: "google" }
       : data.typicalRoads && data.typicalRoads[`${from}>${to}`] ? { list: data.typicalRoads[`${from}>${to}`], source: "typical" } : null);
     const driveTo = { min: toBase.min + toStops, baseMin: toBase.min, stopsMin: toStops, stops: toStops ? stops : 0, source: toBase.source,
-      roads: roadsOf(toBase, start, r.from), country: data.ports[r.from].country };
+      roads: roadsOf(toBase, start, fromKey), country: data.ports[fromKey].country };
     const leave = atPortBy - driveTo.min;
     if (!days.some(d => leave >= d && leave < d + DAY)) continue;
-    const offAt = s.arr + settings.disembarkMin;
-    const fromBase = drive(r.to, end, offAt);
+    // Arrival: the operator's estimate when it gives one, else the scheduled arrival. The scheduled figure is kept.
+    const arrUsed = s.estArr != null ? s.estArr : s.arr;
+    const offAt = arrUsed + settings.disembarkMin;
+    const fromBase = drive(toKey, end, offAt);
     const driveFrom = { min: fromBase.min + fromStops, baseMin: fromBase.min, stopsMin: fromStops, stops: fromStops ? stops : 0, source: fromBase.source,
-      roads: roadsOf(fromBase, r.to, end), country: data.ports[r.to].country };
+      roads: roadsOf(fromBase, toKey, end), country: data.ports[toKey].country };
     const arrive = offAt + driveFrom.min;
+    const scheduledArrive = s.estArr != null ? s.arr + settings.disembarkMin + driveFrom.min : arrive;
     const fare = fares[s.id] || null;
     result.push({
       id: s.id, dir,
@@ -133,17 +150,21 @@ export function options(data, { dir, date, dates, drive, fares = {}, typical = n
       operator: data.operators[r.operator].name,
       bookingUrl: data.operators[r.operator].bookingUrl,
       logo: data.operators[r.operator].logo || null,
-      fromKey: r.from, toKey: r.to,
-      fromPort: data.ports[r.from].name,
-      toPort: data.ports[r.to].name,
+      fromKey, toKey,
+      fromPort: data.ports[fromKey].name,
+      toPort: data.ports[toKey].name,
       vessel: s.vessel,
       vesselSeen: !!(ships && ships[`${r.id}|${s.sailing.dep}`]),
       fast: s.fast,
       shipType: s.fast ? "Fast ferry" : "Standard ferry",
-      leave, atPortBy, dep: s.dep, arr: s.arr, offAt, arrive,
+      leave, atPortBy, dep: s.dep, arr: s.arr, offAt, arrive, scheduledArrive,
+      estDep: s.estDep, estArr: s.estArr,
       totalMin: arrive - leave,
       crossingMin: s.durMin,
-      checkInMin: r.checkInMin,
+      checkInMin,
+      source: s.source, record: s.record, moved: !!s.moved, movedNote: s.movedNote || null, arrSource: s.arrSource || null,
+      onOperator: s.onOperator || r.operator,
+      cancelled: !!s.cancelled, unavailable: !!s.cancelled,
       driveTo, driveFrom,
       overnight: isOvernight(leave, arrive),
       overnightCrossing: isOvernight(s.dep, s.arr),
@@ -156,10 +177,12 @@ export function options(data, { dir, date, dates, drive, fares = {}, typical = n
       verifiedOn: r.verified ? r.verified.on : null,
       typicalFare: (typical && typical(`${r.from}-${r.to}`, r.operator, fmt(s.dep).date)) || r.typicalFare || null,
       flags: [
-        ...((data.verified || r.verified) && !s.sailing.unverified ? [] : ["timetable unverified"]),
-        ...(r.verified && r.verified.by === "aggregator" ? ["times via AFerry, not the operator"] : []),
-        ...(s.sailing.days ? ["days of operation not confirmed"] : []),
-        ...(s.sailing.sourceNote ? [s.sailing.sourceNote] : []),
+        ...(s.source === "operator" ? [] : (data.verified || r.verified) && !s.sailing.unverified ? [] : ["timetable unverified"]),
+        ...(s.source !== "operator" && r.verified && r.verified.by === "aggregator" ? ["times via AFerry, not the operator"] : []),
+        ...(s.source !== "operator" && s.sailing.days ? ["days of operation not confirmed"] : []),
+        ...(s.source !== "operator" && s.sailing.sourceNote ? [s.sailing.sourceNote] : []),
+        ...(s.moved ? [s.movedNote] : []),
+        ...(s.cancelled ? ["cancelled by the operator"] : []),
         ...(driveTo.source === "estimate" || driveFrom.source === "estimate" ? ["drive time estimated"] : []),
         ...(fare ? [] : ["no price yet"]),
       ],
@@ -176,13 +199,14 @@ export function byPreference(opts, pref) {
 }
 
 /** Most sleep on board first (15-min bands), then least driving between 00:00 and 05:00, then shortest door to door. */
+const avail = (a, b) => (a.unavailable ? 1 : 0) - (b.unavailable ? 1 : 0); // cancelled sailings stay visible, last
 export function rankBySleep(opts) {
   const band = (o) => Math.floor(o.sleepMin / SLEEP.bandMin);
-  return opts.slice().sort((a, b) => band(b) - band(a) || a.nightDriveMin - b.nightDriveMin || a.totalMin - b.totalMin || a.id.localeCompare(b.id));
+  return opts.slice().sort((a, b) => avail(a, b) || band(b) - band(a) || a.nightDriveMin - b.nightDriveMin || a.totalMin - b.totalMin || a.id.localeCompare(b.id));
 }
 
 export function rankByTime(opts) {
-  return opts.slice().sort((a, b) => a.totalMin - b.totalMin || a.arrive - b.arrive || a.id.localeCompare(b.id));
+  return opts.slice().sort((a, b) => avail(a, b) || a.totalMin - b.totalMin || a.arrive - b.arrive || a.id.localeCompare(b.id));
 }
 
 /**
@@ -192,6 +216,7 @@ export function rankByTime(opts) {
 export function costTier(o) { return o.fare ? 0 : o.typicalFare ? 1 : 2; }
 export function rankByCost(opts) {
   return opts.slice().sort((a, b) => {
+    const av = avail(a, b); if (av) return av;
     const ta = costTier(a), tb = costTier(b);
     if (ta !== tb) return ta - tb;
     const pa = ta === 0 ? a.fare.amount : ta === 1 ? a.typicalFare.amount : 0;
@@ -200,8 +225,8 @@ export function rankByCost(opts) {
   });
 }
 
-const byArrival = (a, b) => a.arrive - b.arrive || b.leave - a.leave || a.id.localeCompare(b.id);
-const byLatestLeave = (a, b) => b.leave - a.leave || a.arrive - b.arrive || a.id.localeCompare(b.id);
+const byArrival = (a, b) => avail(a, b) || a.arrive - b.arrive || b.leave - a.leave || a.id.localeCompare(b.id);
+const byLatestLeave = (a, b) => avail(a, b) || b.leave - a.leave || a.arrive - b.arrive || a.id.localeCompare(b.id);
 
 /**
  * Answer a question, Cartref-style.
@@ -212,9 +237,9 @@ const byLatestLeave = (a, b) => b.leave - a.leave || a.arrive - b.arrive || a.id
  * sort "cost" re-ranks the eligible set by price (priced first); nothing eligible is dropped.
  * Returns { list, best, next, label, leastLate, window }.
  */
-export function answer(data, { question, dir, nowMin, date, time, pref = "any", sort = "time", drive, fares, typical, ships, settings }) {
+export function answer(data, { question, dir, nowMin, date, time, pref = "any", sort = "time", drive, fares, typical, ships, dated = null, settings }) {
   let list, label, leastLate = false, window = null;
-  const make = (dates) => byPreference(options(data, { dir, dates, drive, fares, typical, ships, settings }), pref);
+  const make = (dates) => byPreference(options(data, { dir, dates, drive, fares, typical, ships, dated, settings }), pref);
   if (question === "now") {
     const today = fmt(nowMin).date;
     list = make([today, addDays(today, 1)]).filter(o => o.leave >= nowMin).sort(byArrival);
@@ -239,7 +264,9 @@ export function answer(data, { question, dir, nowMin, date, time, pref = "any", 
   if (nowMin != null) for (const o of list) o.leaveInMin = o.leave - nowMin;
   if (sort === "sleep") { list = rankBySleep(list); label = list[0]?.sleepMin ? "Most sleep" : label; }
   if (sort === "cost") { list = rankByCost(list); label = list[0]?.fare ? "Cheapest" : list[0]?.typicalFare ? "Cheapest typical price" : label; }
-  return { list, best: list[0] || null, next: list[1] || null, label, leastLate, window };
+  // A cancelled sailing is never a recommendation, but it stays in the list (ranked last by every ordering).
+  const usable = list.filter(o => !o.unavailable);
+  return { list, best: usable[0] || null, next: usable[1] || null, label, leastLate, window };
 }
 
 /** Headline for a round trip: fastest pair and cheapest fully-priced pair. */
@@ -267,6 +294,7 @@ export function makeDrive(data, lookup) {
 export function duration(min) { const h = Math.floor(min / 60), m = min % 60; return h ? `${h}h ${String(m).padStart(2, "0")}m` : `${m} min`; }
 export function countdown(min) {
   if (min < 0) return `leave time passed ${duration(-min)} ago`;
+  if (min === 0) return "leave now";
   if (min >= DAY) { const d = Math.floor(min / DAY); return `leave in ${d} day${d > 1 ? "s" : ""} ${duration(min % DAY)}`; }
   return `leave in ${duration(min)}`;
 }
