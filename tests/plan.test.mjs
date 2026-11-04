@@ -318,3 +318,17 @@ test("observed ships: the ship Irish Ferries' status page showed for a sailing t
   const other = all.find(o => o.id === "irish-HHD-DUB|2026-11-20|07:30");
   assert.equal(other.vessel, "James Joyce"); assert.equal(other.vesselSeen, false);
 });
+
+import { freshness, ageText, timetableCheckedOn, STALE_AFTER_DAYS } from "../src/core/freshness.js";
+test("freshness: age in days, plain wording, stale after the limit, missing is stale unless optional", () => {
+  assert.deepEqual(STALE_AFTER_DAYS, { times: 30, prices: 2, ships: 2, drive: 7 });
+  const f = freshness([
+    { key: "prices", updatedOn: "2026-11-04" }, { key: "prices", updatedOn: "2026-11-02" }, { key: "prices", updatedOn: "2026-11-01" },
+    { key: "times", updatedOn: "2026-10-05" }, { key: "times", updatedOn: "2026-10-04" }, { key: "ships", updatedOn: null },
+    { key: "drive", updatedOn: null, optional: true }, { key: "drive", updatedOn: "2026-11-04T09:30:00.000Z", optional: true },
+  ], "2026-11-04");
+  assert.deepEqual(f.map(x => [x.ageText, x.stale]), [["today", false], ["2 days ago", false], ["3 days ago", true],
+    ["30 days ago", false], ["31 days ago", true], ["never", true], ["never", false], ["today", false]]);
+  assert.equal(ageText(1), "yesterday");
+  assert.equal(timetableCheckedOn({ routes: [{ verified: { on: "2026-11-03" } }, { verified: { on: "2026-10-01" } }, {}] }), "2026-10-01");
+});

@@ -2,6 +2,7 @@
 // every time shown comes from an option the engine built. Layout follows Cartref Commute's Signal design.
 import { answer, options, byPreference, summary, makeDrive, fmt, duration, countdown, addDays } from "./core/plan.js";
 import { driveMinutes, bucket, utcMsToLocalMin } from "./google.js";
+import { freshness, timetableCheckedOn, STALE_AFTER_DAYS } from "./core/freshness.js";
 
 const LS = { settings: "cb.settings.v1", fares: "cb.fares.v1", drive: "cb.drive.v1", form: "cb.form.v2" };
 export const DEFAULTS = { googleKey: "", marginMin: 15, disembarkMin: 20, stops: 1, stopMin: 30, fastFerry: false };
@@ -28,6 +29,8 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   };
 
   const state = { settings: load(LS.settings, DEFAULTS), entered: load(LS.fares, {}), driveCache: load(LS.drive, {}), googleError: null, fetching: 0 };
+  // Drive times are kept per leg and departure time; drop entries older than 7 days (and pre-timestamp ones).
+  for (const [k, v] of Object.entries(state.driveCache)) if (!v || typeof v !== "object" || !v.at || now() - Date.parse(v.at) > STALE_AFTER_DAYS.drive * 864e5) delete state.driveCache[k];
   const nowMin = () => utcMsToLocalMin(now());
   const today = fmt(nowMin()).date;
   const form = load(LS.form, { dir: "out", question: "now", out: addDays(today, 7), back: addDays(today, 14), outTime: "18:00", backTime: "18:00", outPref: "any", backPref: "any", sort: "time" });
@@ -75,7 +78,31 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   };
   function num(sel, d) { const v = parseInt($(sel).value, 10); return Number.isFinite(v) && v >= 0 ? v : d; }
   function saveSettings() { save(LS.settings, state.settings); refresh(); }
-  $("#banner").textContent = data.verified ? "" : (data.bannerNote || `Ferry times not yet checked with the operators (data as of ${niceDate(data.asOf)}). Confirm before booking.`);
+  // When was each data source last updated? Shown at the top (one line) and in full under "Data sources".
+  function sources() {
+    const today = fmt(nowMin()).date;
+    const driveAts = Object.values(state.driveCache).map(v => v.at).filter(Boolean).sort();
+    const quotes = Object.keys(fareData.quotes || {}).length;
+    return freshness([
+      { key: "times", label: "Ferry times", verb: "checked", updatedOn: timetableCheckedOn(data),
+        detail: "Irish Ferries routes against Irish Ferries' own status pages; Stena routes via AFerry. Dublin Swift times unverified." },
+      { key: "prices", label: "Prices", verb: "updated", updatedOn: fareData.fetchedOn || null,
+        detail: fareData.fetchedOn ? `AFerry: ${quotes} dated price${quotes === 1 ? "" : "s"} for specific sailings, plus monthly typical prices. Refreshed daily.` : "No fetched prices yet." },
+      { key: "ships", label: "Ships", verb: "updated", updatedOn: shipData.updatedOn || null,
+        detail: shipData.updatedOn ? "Which ship ran each Irish Ferries sailing, from its status pages. Refreshed daily." : "Not yet recorded." },
+      { key: "drive", label: "Drive times", verb: "updated", optional: true, updatedOn: state.settings.googleKey && driveAts.length ? driveAts.at(-1) : null,
+        detail: state.settings.googleKey ? "Google Routes with traffic for each departure time; kept up to 7 days." : "No Google key: rough estimates without traffic (marked “estimate”)." },
+    ], today);
+  }
+  function drawSources() {
+    const list = sources();
+    const bit = (x) => x.key === "drive" && !state.settings.googleKey ? `<span>Drive times: estimates</span>`
+      : `<span class="${x.stale ? "stale" : ""}">${esc(x.label)} ${x.updatedOn ? `${x.verb} ${esc(x.ageText)}` : "never updated"}</span>`;
+    $("#banner").innerHTML = list.map(bit).join(" · ") + (list.some(x => x.stale) ? ` <b class="stale">Check before booking.</b>` : "");
+    $("#sources").innerHTML = `<h3>Data sources</h3>` + list.map(x => `<div class="src-row${x.stale ? " stale" : ""}"><b>${esc(x.label)}</b>
+      <span>${x.updatedOn ? `${x.verb} ${esc(niceDate(x.updatedOn.slice(0, 10)))} (${esc(x.ageText)})` : "never updated"}${x.stale ? " · out of date" : ""}</span>
+      <small>${esc(x.detail)}</small></div>`).join("");
+  }
 
   // ---- data plumbing
   const allFares = () => {
@@ -89,7 +116,7 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   const lookup = (from, to, m) => {
     const v = state.driveCache[ckey(from, to, m)];
     if (v == null) return null;
-    return typeof v === "number" ? { min: v, source: "google" } : { min: v.min, roads: v.roads || [], source: "google" }; // numbers: cache before roads
+    return { min: v.min, roads: v.roads || [], source: "google", at: v.at };
   };
 
   function question(dir, drive, extra = {}) {
@@ -119,7 +146,7 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
       if (!need.size) return;
       state.fetching = need.size; drawStatus();
       await Promise.all([...need.entries()].map(async ([k, q]) => {
-        try { state.driveCache[k] = await driveMinutes({ key: state.settings.googleKey, origin: addr(q.from), destination: addr(q.to), departLocalMin: q.m, nowMs: now(), fetchFn }); }
+        try { state.driveCache[k] = { ...(await driveMinutes({ key: state.settings.googleKey, origin: addr(q.from), destination: addr(q.to), departLocalMin: q.m, nowMs: now(), fetchFn })), at: new Date(now()).toISOString() }; }
         catch (e) { state.googleError = e.message; }
       }));
       state.fetching = 0;
@@ -159,7 +186,7 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
     $("#list").innerHTML = rest.map(o => card(o, { dir: form.dir, compact: true })).join("");
     const rt = roundTrip(drive);
     $("#roundTrip").innerHTML = rt ? roundTripHtml(rt) : "";
-    drawStatus();
+    drawStatus(); drawSources();
     document.querySelectorAll("input.fare-in").forEach(inp => inp.onchange = () => {
       const v = parseFloat(inp.value);
       if (Number.isFinite(v) && v > 0) state.entered[inp.dataset.id] = { amount: v, currency: "GBP", at: new Date(now()).toISOString() };

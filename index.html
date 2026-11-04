@@ -12,13 +12,13 @@ html {
   --paper:#f2f5f8; --card:#ffffff; --ink:#142436; --muted:#506174; --line:#d4dde7;
   --accent:#1453b6; --accent-ink:#ffffff; --signal-soft:#e8f0fd; --signal-inset:#edf2f7;
   --signal-control-line:#8191a5; --signal-shadow:0 2px 9px #10213606;
-  --note:#746000; --note-bg:#fff7d2;
+  --note:#746000; --note-bg:#fff7d2; --warn:#805000; --warn-bg:#fff1d9;
   }
 @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) {
   color-scheme:dark;
   --paper:#090f16; --card:#121c28; --ink:#f0f5fc; --muted:#aabbd0; --line:#2c3b4e;
   --accent:#9bc3ff; --accent-ink:#0a1525; --signal-soft:#182d48; --signal-inset:#182433;
-  --signal-control-line:#71869f; --signal-shadow:none; --note:#efdd88; --note-bg:#363219;
+  --signal-control-line:#71869f; --signal-shadow:none; --note:#efdd88; --note-bg:#363219; --warn:#ffd08a; --warn-bg:#47331b;
 } }
 * { box-sizing:border-box; }
 [hidden] { display:none !important; }
@@ -45,6 +45,10 @@ button { font:inherit; min-width:44px; min-height:44px; touch-action:manipulatio
 .ghost { border:1px solid var(--signal-control-line); background:var(--card); color:var(--accent); border-radius:9px; padding:8px 11px; font-size:14px; }
 .ghost[aria-pressed="true"] { background:var(--signal-soft); border-color:var(--accent); font-weight:650; }
 .primary { display:inline-flex; align-items:center; justify-content:center; min-height:44px; border:1px solid var(--accent); background:var(--accent); color:var(--accent-ink); border-radius:9px; padding:8px 14px; font-size:14px; font-weight:700; text-decoration:none; }
+#banner .stale { color:var(--warn); font-weight:700; }
+#sources { display:grid; gap:8px; font-size:14px; } #sources h3 { margin:0; font-size:16px; color:var(--muted); }
+.src-row { display:grid; gap:2px; padding:8px 10px; border-radius:10px; background:var(--card); border:1px solid var(--line); }
+.src-row small { color:var(--muted); font-size:12px; } .src-row.stale { border-color:var(--warn); } .src-row.stale span { color:var(--warn); font-weight:650; }
 #banner:not(:empty), .banner-inline { background:var(--note-bg); color:var(--note); padding:8px 10px; border-radius:10px; font-size:13px; }
 #status:not(:empty) { font-size:13px; color:var(--muted); }
 #hero, #list > .opt, #roundTrip:not(:empty) { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; box-shadow:var(--signal-shadow); }
@@ -133,6 +137,7 @@ h2 { font-size:16px; margin:12px 0 0; color:var(--muted); }
   <h2 id="listTitle" hidden></h2>
   <section id="list"></section>
   <section id="roundTrip"></section>
+  <section id="sources" aria-label="Data sources"></section>
   <p class="foot">Overnight = any part of the journey, door to door, between 00:00 and 05:00. Fares are singles for a car and 2 adults: enter the quote you see to rank by cost.</p>
   <details id="settings">
     <summary>Settings</summary>

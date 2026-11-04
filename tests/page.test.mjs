@@ -71,7 +71,8 @@ test("Leave now (default): Signal card with Leave by → At Borris, Total journe
   assert.equal(await best.locator(".op img").getAttribute("alt"), "Irish Ferries");
   assert.ok(await best.locator(".op img").evaluate(i => i.complete && i.naturalWidth > 0), "logo loads");
   assert.match(await page.textContent("#hero .next-best"), /Next best[\s\S]*Leave by/);
-  assert.match(await page.textContent("#banner"), /checked 3 Nov 2026: Irish Ferries from its own pages, Stena via AFerry/);
+  // No fares/ships files in this test: those sources say "never updated" and the banner asks for a check.
+  assert.equal((await page.textContent("#banner")).replace(/\s+/g, " ").trim(), "Ferry times checked today · Prices never updated · Ships never updated · Drive times: estimates Check before booking.");
   assert.match(text, /Times checked with Irish Ferries Tue 3 Nov/);
   assert.match(text, /~£163\s*typical, not a quote \(AFerry operator average, 3 Nov\)/);
   assert.match(await page.textContent("#status"), /No Google key/);
@@ -234,4 +235,21 @@ test("Ship sightings: the observed ship is shown; the fast-ferry note says wheth
   const seen = await openPage({ ships: { ...ships, fastShipsSeen: { "Dublin Swift": "2026-11-02" } } });
   assert.match(await seen.page.textContent("#fastNote"), /Dublin Swift last seen sailing on Irish Ferries' status page Mon 2 Nov\./);
   await seen.ctx.close();
+});
+
+test("Data sources: each source shows when it was last updated; out-of-date ones are flagged", async () => {
+  const fares = { fetchedOn: "2026-10-30", routes: {}, quotes: {} };               // 4 days old: stale (limit 2)
+  const ships = { updatedOn: "2026-11-02", sailings: {}, fastShipsSeen: {} };      // yesterday: fresh
+  const { page, ctx } = await openPage({ fares, ships });
+  const banner = (await page.textContent("#banner")).replace(/\s+/g, " ").trim();
+  assert.equal(banner, "Ferry times checked today · Prices updated 4 days ago · Ships updated yesterday · Drive times: estimates Check before booking.");
+  assert.deepEqual(await page.locator("#banner .stale").allTextContents(), ["Prices updated 4 days ago", "Check before booking."]);
+  const rows = await page.locator("#sources .src-row").allTextContents();
+  assert.equal(rows.length, 4);
+  assert.match(rows[0], /Ferry times\s*checked Tue 3 Nov \(today\)/);
+  assert.match(rows[1], /Prices\s*updated Fri 30 Oct \(4 days ago\) · out of date/);
+  assert.match(rows[2], /Ships\s*updated Mon 2 Nov \(yesterday\)/);
+  assert.match(rows[3], /Drive times\s*never updated[\s\S]*No Google key/);
+  assert.equal(await page.locator("#sources .src-row.stale").count(), 1);
+  await ctx.close();
 });

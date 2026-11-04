@@ -74,6 +74,9 @@ For a sailing departing `dep` with crossing `durMin` and operator check-in `chec
   Ferries' Dublin–Holyhead and Rosslare–Pembroke status tables into `data/ships.json` (ship per sailing time, Swift
   sightings, sailings not in our timetable). The engine prefers the observed ship.
 
+- **4 Nov 2026** Data freshness shown at the top and in a Data sources section (pure `src/core/freshness.js`);
+  drive-time cache entries carry a timestamp and expire after 7 days ([story](stories/data-freshness.md)).
+
 ## Known gaps / next
 1. Confirm Stena times from Stena itself and the day-of-week patterns; re-run the probe when timetables change.
 2. Measure the fallback drive estimates with Google (needs `GOOGLE_MAPS_KEY` in the environment).
