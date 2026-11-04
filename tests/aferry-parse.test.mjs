@@ -46,4 +46,6 @@ test("Irish Ferries status rows: route, times, ship and status, whatever the cel
     { routeId: "irish-RSL-PEM", from: "RSL", to: "PEM", dep: "20:45", arr: "00:46", ship: "Isle of Innisfree", status: "On Time" },
   ]);
   assert.deepEqual(parseIrishStatus(piped).map(r => [r.routeId, r.dep, r.ship]), [["irish-HHD-DUB", "14:30", "Dublin Swift"]]);
+  // The page shortens Isle of Innisfree to "Innisfree" (seen 4 Nov).
+  assert.equal(parseIrishStatus("Pembroke - Rosslare 02:45 06:46 Innisfree On Time")[0].ship, "Isle of Innisfree");
 });

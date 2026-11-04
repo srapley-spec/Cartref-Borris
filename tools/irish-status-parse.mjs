@@ -3,6 +3,9 @@
 // Cell separators are unknown/unstable, so " | " separators are flattened to spaces before matching.
 import { PORTS } from "./aferry-parse.mjs";
 
+// Short names on the status page -> full ship names.
+export const SHIP_ALIASES = { Innisfree: "Isle of Innisfree" };
+
 const STATUS = "On Time|Arrived|Departed|Delayed|Cancelled|Early Sailing|Late Sailing|Rescheduled|Scheduled|Boarding|Not Operating";
 const ROW = new RegExp(`\\b(Dublin|Holyhead|Rosslare|Pembroke) - (Dublin|Holyhead|Rosslare|Pembroke) (\\d\\d:\\d\\d) (\\d\\d:\\d\\d) ([A-Z][A-Za-z.' ]{1,30}?) (${STATUS})\\b`, "g");
 
@@ -13,7 +16,7 @@ export function parseIrishStatus(text) {
   for (const m of flat.matchAll(ROW)) {
     const [, fromName, toName, dep, arr, ship, status] = m;
     const routeId = `irish-${PORTS[fromName]}-${PORTS[toName]}`;
-    seen.set(`${routeId}|${dep}`, { routeId, from: PORTS[fromName], to: PORTS[toName], dep, arr, ship: ship.trim(), status });
+    seen.set(`${routeId}|${dep}`, { routeId, from: PORTS[fromName], to: PORTS[toName], dep, arr, ship: SHIP_ALIASES[ship.trim()] || ship.trim(), status });
   }
   return [...seen.values()];
 }
