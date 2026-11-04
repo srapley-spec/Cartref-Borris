@@ -1,0 +1,25 @@
+name: Fetch raw pages
+# Manual only. Saves the given pages as an artifact (and compressed in the log) for building parser fixtures.
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "Whitespace-separated URLs"
+        required: true
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/fetch-raw.mjs
+        env:
+          RAW_URLS: ${{ inputs.urls }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: raw-pages
+          path: raw/
+          retention-days: 3
