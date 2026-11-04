@@ -1,0 +1,31 @@
+name: Probe AFerry search (browser)
+# Manual only. Runs a real browser against AFerry's search once and logs where prices come from. No booking.
+on:
+  workflow_dispatch:
+    inputs:
+      page:
+        description: "AFerry route page to start from"
+        required: false
+        default: "https://www.aferry.com/en-gb/holyhead-dublin/"
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Probe
+        env:
+          AFERRY_PAGE: ${{ inputs.page }}
+        run: node tools/probe-aferry-search.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: probe-out
+          path: probe-out/
+          retention-days: 3
