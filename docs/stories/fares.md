@@ -24,9 +24,24 @@ Direct Ferries is Cloudflare-blocked; Stena's booking API is behind Cloudflare T
    "Leave now (default)…"
 4. Tests never read the live `data/fares.json` (it changes daily). → page tests route it.
 
-## Not done (Sam to decide)
-Live prices for any date need AFerry's booking search (`book.aferry.com`) or the operators' booking engines run by a
-headless browser: fragile, likely against their terms, and possibly blocked. Not built without Sam's say-so.
+## Live prices (Sam, 4 Nov: "Try the AFerry booking search for live prices")
+AFerry's search works with two plain requests (no browser), found 4 Nov: `POST /mfe/search/v2/` with one leg (route code,
+date, time, 2 adults, standard car) returns `{ location: /en-gb/search/<id>/ }`; that page, fetched a few seconds later,
+lists the ~8 sailings nearest the requested time (±1 day, both operators, neighbouring Rosslare routes too) with prices.
+A "Searching Stena Line..." placeholder stays on the finished page, so polling stops when two fetches agree. Requests
+identify as "cartref-borris personal trip planner"; AFerry serves a 404 to a browser announcing itself as headless, and
+we do not disguise the client. Stena's own site (Cloudflare Turnstile) is not touched: Stena prices come via AFerry.
+
+5. A Cloudflare Worker (`proxy/worker-src.mjs`, bundled to paste-ready `proxy/worker.js` by `tools/build-worker.mjs`)
+   serves `GET /prices?route=&date=&time=`, only to `ALLOW_ORIGIN`, validates input, caches results an hour.
+   → `tests/live-prices.test.mjs` "worker…", "paste-ready proxy/worker.js is up to date…"
+6. With Settings → Proxy URL set, the app searches the date on screen: Holyhead at 06:00, 09:00 and 18:00, Rosslare at
+   12:00, plus the next morning's Holyhead window (5 searches, ~20 s, in parallel), caches them an hour on the phone, and
+   maps rows to our sailings by ports and departure time. Live prices beat daily dated prices; Sam's entered quote beats
+   both. Shown as "£150 · AFerry live price, checked 10:00". → "price searches…", "live rows map…", page "Live prices via
+   the proxy…"
+7. Parser and flow are tested against a real results-page slice (`tests/fixtures/aferry-results-HHD-DUB-2026-11-20.html`).
+   → "AFerry results parser…", "searchAferry…"
 
 ## Status
-Built 4 Nov 2026.
+Built 4 Nov 2026; live prices added the same day (needs the Worker deployed).

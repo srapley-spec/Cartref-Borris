@@ -32,6 +32,11 @@ until they are updated; say so.
 Never ask for or handle a raw API key in chat, the repo, tests or logs. The Google key lives in the phone's
 Settings (localStorage) and, for verification in cloud sessions, the environment secret `GOOGLE_MAPS_KEY`.
 
+## Proxy (Cloudflare Worker)
+- Source `proxy/worker-src.mjs` + `tools/aferry-search.mjs`; `node tools/build-worker.mjs` writes the paste-ready
+  `proxy/worker.js` (a test fails if it's stale). Sam deploys it by hand; tell him when it needs re-pasting.
+- Identify honestly (`UA` in `tools/aferry-search.mjs`); never disguise the client or work around a site's bot checks.
+
 ## Build, test, release
 - No build step: `index.html` loads `src/app.js` as an ES module. GitHub Pages serves `main` from the root.
 - `npm ci` once (CI), `npm test` runs the engine and browser tests (Playwright/Chromium, `TZ=Europe/London`,

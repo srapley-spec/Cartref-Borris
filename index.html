@@ -143,6 +143,7 @@ h2 { font-size:16px; margin:12px 0 0; color:var(--muted); }
     <summary>Settings</summary>
     <div style="display:grid;gap:8px">
       <label class="f">Google Maps key (Routes API; stored only on this phone)<input type="password" id="key" autocomplete="off"></label>
+      <label class="f">Proxy URL for live prices and sailing updates (your Cloudflare Worker)<input type="url" id="proxy" autocomplete="off" placeholder="https://….workers.dev"></label>
       <div class="grid2">
         <label class="f">Minutes per stop<input type="number" id="stopMin" min="0" inputmode="numeric"></label>
         <label class="f">Extra margin before check-in (min)<input type="number" id="margin" min="0" inputmode="numeric"></label>

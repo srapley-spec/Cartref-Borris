@@ -3,9 +3,11 @@
 import { answer, options, byPreference, summary, makeDrive, fmt, duration, countdown, addDays } from "./core/plan.js";
 import { driveMinutes, bucket, utcMsToLocalMin } from "./google.js";
 import { freshness, timetableCheckedOn, STALE_AFTER_DAYS } from "./core/freshness.js";
+import { priceSearches, mapLiveRows } from "./core/prices.js";
 
-const LS = { settings: "cb.settings.v1", fares: "cb.fares.v1", drive: "cb.drive.v1", form: "cb.form.v2" };
-export const DEFAULTS = { googleKey: "", marginMin: 15, disembarkMin: 20, stops: 1, stopMin: 30, fastFerry: false };
+const LS = { settings: "cb.settings.v1", fares: "cb.fares.v1", drive: "cb.drive.v1", form: "cb.form.v2", live: "cb.live.v1" };
+export const LIVE_TTL_MS = 60 * 60000; // live prices are re-searched after an hour
+export const DEFAULTS = { googleKey: "", marginMin: 15, disembarkMin: 20, stops: 1, stopMin: 30, fastFerry: false, proxyUrl: "" };
 
 const load = (k, d) => { try { return { ...d, ...(JSON.parse(localStorage.getItem(k)) || {}) }; } catch { return { ...d }; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode: ignore */ } };
@@ -70,10 +72,10 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
   $("#fastFerry").onclick = () => { state.settings.fastFerry = !state.settings.fastFerry; saveSettings(); };
   $("#refresh").onclick = () => { state.googleError = null; refresh(); };
   $("#settingsBtn").onclick = () => { const d = $("#settings"); d.open = !d.open; if (d.open) d.scrollIntoView({ block: "start" }); };
-  $("#key").value = state.settings.googleKey;
+  $("#key").value = state.settings.googleKey; $("#proxy").value = state.settings.proxyUrl || "";
   $("#margin").value = state.settings.marginMin; $("#disembark").value = state.settings.disembarkMin; $("#stopMin").value = state.settings.stopMin;
   $("#saveSettings").onclick = () => {
-    Object.assign(state.settings, { googleKey: $("#key").value.trim(), marginMin: num("#margin", 15), disembarkMin: num("#disembark", 20), stopMin: num("#stopMin", 30) });
+    Object.assign(state.settings, { googleKey: $("#key").value.trim(), proxyUrl: $("#proxy").value.trim().replace(/\/+$/, ""), marginMin: num("#margin", 15), disembarkMin: num("#disembark", 20), stopMin: num("#stopMin", 30) });
     state.googleError = null; saveSettings();
   };
   function num(sel, d) { const v = parseInt($(sel).value, 10); return Number.isFinite(v) && v >= 0 ? v : d; }
@@ -86,8 +88,8 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
     return freshness([
       { key: "times", label: "Ferry times", verb: "checked", updatedOn: timetableCheckedOn(data),
         detail: "Irish Ferries routes against Irish Ferries' own status pages; Stena routes via AFerry. Dublin Swift times unverified." },
-      { key: "prices", label: "Prices", verb: "updated", updatedOn: fareData.fetchedOn || null,
-        detail: fareData.fetchedOn ? `AFerry: ${quotes} dated price${quotes === 1 ? "" : "s"} for specific sailings, plus monthly typical prices. Refreshed daily.` : "No fetched prices yet." },
+      { key: "prices", label: "Prices", verb: "updated", updatedOn: [fareData.fetchedOn, ...Object.values(state.live).map(v => v.checkedAt)].filter(Boolean).sort().at(-1) || null,
+        detail: fareData.fetchedOn ? `${state.settings.proxyUrl ? "Live AFerry searches for the dates on screen (re-searched after an hour); " : ""}AFerry: ${quotes} dated price${quotes === 1 ? "" : "s"} for specific sailings, plus monthly typical prices, refreshed daily.` : "No fetched prices yet." },
       { key: "ships", label: "Ships", verb: "updated", updatedOn: shipData.updatedOn || null,
         detail: shipData.updatedOn ? "Which ship ran each Irish Ferries sailing, from its status pages. Refreshed daily." : "Not yet recorded." },
       { key: "drive", label: "Drive times", verb: "updated", optional: true, updatedOn: state.settings.googleKey && driveAts.length ? driveAts.at(-1) : null,
@@ -104,10 +106,41 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
       <small>${esc(x.detail)}</small></div>`).join("");
   }
 
+  // ---- live prices via the proxy (AFerry search), cached per search for an hour on the phone
+  state.live = load(LS.live, {});
+  for (const [k, v] of Object.entries(state.live)) if (!v.checkedAt || now() - Date.parse(v.checkedAt) > LIVE_TTL_MS) delete state.live[k];
+  state.liveError = null; state.liveFetching = 0;
+  function livePrices() {
+    const out = {};
+    for (const v of Object.values(state.live)) Object.assign(out, mapLiveRows(data, v.rows || [], v.checkedAt).prices);
+    return out;
+  }
+  function liveDates() {
+    const d = form.question === "now" ? [fmt(nowMin()).date] : [form.dir === "out" ? form.out : (form.back || form.out)];
+    return form.question === "now" ? [d[0], addDays(d[0], 1)] : d;
+  }
+  async function fetchLive() {
+    if (!state.settings.proxyUrl) return;
+    const todo = priceSearches(form.dir, liveDates()).filter(q => !state.live[`${q.route}|${q.date}|${q.time}`]);
+    if (!todo.length) return;
+    state.liveFetching = todo.length; drawStatus();
+    await Promise.all(todo.map(async (q) => {
+      try {
+        const r = await fetchFn(`${state.settings.proxyUrl}/prices?route=${q.route}&date=${q.date}&time=${q.time}`);
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+        state.live[`${q.route}|${q.date}|${q.time}`] = { checkedAt: j.checkedAt, rows: j.rows || [] };
+      } catch (e) { state.liveError = e.message; }
+    }));
+    state.liveFetching = 0;
+    save(LS.live, state.live);
+  }
+
   // ---- data plumbing
   const allFares = () => {
     const f = {};
     for (const [id, v] of Object.entries(fareData.quotes)) f[id] = { ...v, source: "fetched" };
+    for (const [id, v] of Object.entries(livePrices())) f[id] = { ...v, source: "live" };
     for (const [id, v] of Object.entries(state.entered)) f[id] = { ...v, source: "entered" };
     return f;
   };
@@ -158,6 +191,8 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
 
   // ---- drawing
   function drawStatus() {
+    if (state.liveFetching) { $("#status").textContent = `Getting live prices (${state.liveFetching} search${state.liveFetching > 1 ? "es" : ""}, about 20 seconds)…`; return; }
+    if (state.liveError && !state.fetching) { $("#status").textContent = `Live prices failed (${state.liveError}); showing other prices.`; return; }
     $("#status").textContent = state.fetching ? `Getting ${state.fetching} drive time${state.fetching > 1 ? "s" : ""} from Google…`
       : state.googleError ? `Google drive times failed (${state.googleError}); using estimates.`
       : state.settings.googleKey ? "" : "No Google key in Settings: drive times are rough estimates without traffic.";
@@ -195,7 +230,7 @@ export async function start({ fetchFn = fetch, now = () => Date.now() } = {}) {
     });
   }
 
-  function refresh() { draw(); fetchDrives().then(draw); }
+  function refresh() { draw(); fetchDrives().then(draw); fetchLive().then(draw); }
   refresh();
   setInterval(draw, 30000); // countdowns
   return { form, state, draw };
@@ -221,9 +256,11 @@ export function fastNote(data, shipData) {
       : `${ship} not yet checked against Irish Ferries' status pages; its times here are from memory.`;
   }).join(" ");
 }
+function clock(iso) { return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" }); }
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 function fareHtml(o) {
   if (o.fare && o.fare.source === "entered") return `<span class="price">${money(o.fare)}</span><span class="src">you entered</span>`;
+  if (o.fare && o.fare.source === "live") return `<span class="price">${money(o.fare)}</span><span class="src">AFerry live price, checked ${esc(clock(o.fare.checkedAt))}</span>`;
   if (o.fare) return `<span class="price">${money(o.fare)}</span><span class="src">AFerry price for this sailing, seen ${esc(niceDate(o.fare.seenOn || o.fare.date))}</span>`;
   if (o.typicalFare) return `<span class="price typical">~£${o.typicalFare.amount}</span><span class="src">typical, not a quote (AFerry ${esc(o.typicalFare.basis || "average")})</span>`;
   return `<span class="src">No price yet</span>`;

@@ -253,3 +253,30 @@ test("Data sources: each source shows when it was last updated; out-of-date ones
   assert.equal(await page.locator("#sources .src-row.stale").count(), 1);
   await ctx.close();
 });
+
+test("Live prices via the proxy: searches for the date on screen; live prices beat daily ones and show their check time", async () => {
+  const { page, ctx } = await openPage({ fares: { fetchedOn: "2026-11-03", routes: {}, quotes: { "irish-HHD-DUB|2026-11-10|19:30": { amount: 99, date: "2026-11-10", seenOn: "2026-11-03" } } } });
+  const asked = [];
+  await page.route("https://proxy.test/**", (route) => {
+    const u = new URL(route.request().url()); asked.push(`${u.pathname}?${u.searchParams}`);
+    const rows = u.searchParams.get("route") === "HHD-DUB" && u.searchParams.get("date") === "2026-11-10"
+      ? [{ from: "HHD", to: "DUB", dep: "19:30", date: "2026-11-10", arr: "23:00", arrDate: "2026-11-10", durMin: 210, amount: 185 },
+         { from: "HHD", to: "DUB", dep: "16:00", date: "2026-11-10", arr: "19:30", arrDate: "2026-11-10", durMin: 210, amount: 150 }] : [];
+    route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ checkedAt: "2026-11-03T10:00:00.000Z", rows }) });
+  });
+  await seg(page, "questionSeg", "fastest");
+  await page.click("#ctx summary"); await seg(page, "sortSeg", "cost"); await page.click("#ctx summary");
+  await page.click("#settingsBtn"); await page.fill("#proxy", "https://proxy.test/"); await page.click("#saveSettings");
+  await page.waitForFunction(() => /live price/.test(document.querySelector("#hero").textContent));
+  assert.ok(asked.includes("/prices?route=HHD-DUB&date=2026-11-10&time=0600") && asked.includes("/prices?route=FGD-RSL&date=2026-11-10&time=1200"), asked.join(" "));
+  const first = page.locator("#hero > .opt").first();
+  assert.equal(await first.getAttribute("data-id"), "stena-HHD-DUB|2026-11-10|16:00");
+  assert.match(await first.textContent(), /£150\s*AFerry live price, checked 10:00/);
+  const ij = page.locator('.opt[data-id="irish-HHD-DUB|2026-11-10|19:30"]');
+  assert.match(await ij.textContent(), /£185\s*AFerry live price/);                 // live £185 replaces daily £99
+  assert.match(await page.textContent("#sources"), /Live AFerry searches/);
+  const n = asked.length;
+  await page.reload(); await page.waitForSelector("#hero .opt"); await page.waitForTimeout(300);
+  assert.equal(asked.length, n, "cached for an hour: no new searches on reload");
+  await ctx.close();
+});

@@ -77,6 +77,9 @@ For a sailing departing `dep` with crossing `durMin` and operator check-in `chec
 - **4 Nov 2026** Data freshness shown at the top and in a Data sources section (pure `src/core/freshness.js`);
   drive-time cache entries carry a timestamp and expire after 7 days ([story](stories/data-freshness.md)).
 
+- **4 Nov 2026** Live AFerry prices via a Cloudflare Worker (Sam approved trying the booking search). Plain requests,
+  honest client identity; Stena's Turnstile-protected site is not touched ([fares story](stories/fares.md)).
+
 ## Known gaps / next
 1. Confirm Stena times from Stena itself and the day-of-week patterns; re-run the probe when timetables change.
 2. Measure the fallback drive estimates with Google (needs `GOOGLE_MAPS_KEY` in the environment).

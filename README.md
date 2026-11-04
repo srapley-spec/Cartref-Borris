@@ -8,3 +8,9 @@ every Stena Line / Irish Ferries option door to door, ranked by time or by cost.
 - Timetable is **not yet verified** against the operators; see `docs/architecture.md`.
 
 Start with `CLAUDE.md`. Tests: `npm test`.
+
+## Live prices and sailing updates (optional, one-off setup)
+1. Cloudflare dashboard → Workers & Pages → Create → Worker → paste the whole of `proxy/worker.js` → Deploy.
+2. Worker → Settings → Variables: add `ALLOW_ORIGIN` = `https://srapley-spec.github.io`.
+3. In the app: Settings → Proxy URL = the worker's `https://….workers.dev` address → Save.
+After changing `proxy/worker-src.mjs` or `tools/aferry-search.mjs`, run `node tools/build-worker.mjs` and re-paste.
