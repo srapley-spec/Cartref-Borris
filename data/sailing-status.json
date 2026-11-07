@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "collectedAt": "2026-11-07T08:40:39.115Z",
+ "collectedAt": "2026-11-07T15:37:10.090Z",
  "collectedOn": "2026-11-07",
  "cadenceNote": "GitHub Actions schedule (see .github/workflows/status.yml); not a guaranteed real-time feed",
  "sources": {
@@ -11,9 +11,9 @@
    "routeIds": [
     "stena-DUB-HHD"
    ],
-   "attemptedAt": "2026-11-07T08:40:39.115Z",
+   "attemptedAt": "2026-11-07T15:37:10.090Z",
    "ok": true,
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "httpStatus": 200,
    "error": null,
    "warnings": [],
@@ -24,7 +24,7 @@
    "sailingsSeen": 7,
    "checkInMin": 30,
    "checkInNote": "class=\"row customerNotes\"> Latest check-in time Foot passengers: the latest check-in time for all sailings is no later than 40 minutes before the scheduled departure times. Vehicles: the latest check-in time for all sailings is no later that 30 minutes before the scheduled departure times. Premium customers should check-in at least 45 minutes before the scheduled departure times. //Called in site.js var d = new Date(2026,11,1,16,17); var offset = d.getTimezoneOffset(); var fd = new Date(d.getTime() - offset * 60000); document.getElementById('x').innerHTML = (fd.getDate().toString().length == 1 ? '0' + fd.getDate() : fd.getDate()) + '.' + (fd.getMonth().toString().length == 1 ? '0' + fd.getMonth() : fd.getMonth()) + '.' + fd.getFullYear().toString().substr(2, 2) + ' ' + (fd.getHours().toString().length == 1 ? '0' + fd.getHours() : fd.getHours()) + ':' + (fd.getMinutes().toString().length == 1 ? '0' + fd.getMinutes() : fd.getMinutes()); function setCorrrectTab() { var todaysDate = new Date(2026, 10, 7); var currDay = todaysDate.getFullYear().toString() + (todaysDate.getMonth() + 1).toString().padStart(2, '0') + todaysDate.getDate().toString().padStart(2, '0'); document.querySelectorAll('[data-day]').forEach(function (i) { i.classList.remove(\"active\"); }) var className = \"dDay-\" + currDay; var activeTab = document.getElementsByClassName(className)[0]; activeTab.classList.add(\"active\"); var activeTabId = activeTab.querySelector('[data-toggle]').getAttribute('href').substr(1); var activePane = document.getElementsByClassName('tab-pane active'); for (i = 0; i (window.jQuery||document.write(\"\\u003Cscript src=\\u0022/lib/jquery/dist/jquery.min.js\\u0022 crossorigin=\\u0022anonymous\\u0022 integrity=\\u0022sha384-K\\u002BctZQ\\u002BLL8q6tP7I94W\\u002BqzQsfRV2a\\u002BAfHIi9k8z8l9ggpc8X\\u002BYtst4yBo/hH\\u002B8Fk\\u0022\\u003E\\u003C/script\\u003E\")); (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal||document.write(\"\\u003Cscript src=\\u0022/lib/bootstrap/dist/js/bootstrap.min.js\\u0022 crossorigin=\\u0022anonymous\\u0022 integrity=\\u0022sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa\\u0022\\u003E\\u003C/script\\u003E\"));",
-   "lastGoodAt": "2026-11-07T08:40:39.115Z"
+   "lastGoodAt": "2026-11-07T15:37:10.090Z"
   },
   "stena-ferrycheck-6": {
    "url": "https://stenalineferrycheck.azurewebsites.net/RouteInfo/details?id=6",
@@ -33,9 +33,9 @@
    "routeIds": [
     "stena-HHD-DUB"
    ],
-   "attemptedAt": "2026-11-07T08:40:39.115Z",
+   "attemptedAt": "2026-11-07T15:37:10.090Z",
    "ok": true,
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "httpStatus": 200,
    "error": null,
    "warnings": [],
@@ -45,8 +45,8 @@
    ],
    "sailingsSeen": 7,
    "checkInMin": 30,
-   "checkInNote": "class=\"row customerNotes\"> Latest check-in time Foot passengers: the latest check-in time for all sailings is no later than 40 minutes before the scheduled departure times. Vehicles: the latest check-in time for all sailings is no later that 30 minutes before the scheduled departure times. Premium customers should check-in at least 45 minutes before the scheduled departure times. //Called in site.js var d = new Date(2026,11,7,3,53); var offset = d.getTimezoneOffset(); var fd = new Date(d.getTime() - offset * 60000); document.getElementById('x').innerHTML = (fd.getDate().toString().length == 1 ? '0' + fd.getDate() : fd.getDate()) + '.' + (fd.getMonth().toString().length == 1 ? '0' + fd.getMonth() : fd.getMonth()) + '.' + fd.getFullYear().toString().substr(2, 2) + ' ' + (fd.getHours().toString().length == 1 ? '0' + fd.getHours() : fd.getHours()) + ':' + (fd.getMinutes().toString().length == 1 ? '0' + fd.getMinutes() : fd.getMinutes()); function setCorrrectTab() { var todaysDate = new Date(2026, 10, 7); var currDay = todaysDate.getFullYear().toString() + (todaysDate.getMonth() + 1).toString().padStart(2, '0') + todaysDate.getDate().toString().padStart(2, '0'); document.querySelectorAll('[data-day]').forEach(function (i) { i.classList.remove(\"active\"); }) var className = \"dDay-\" + currDay; var activeTab = document.getElementsByClassName(className)[0]; activeTab.classList.add(\"active\"); var activeTabId = activeTab.querySelector('[data-toggle]').getAttribute('href').substr(1); var activePane = document.getElementsByClassName('tab-pane active'); for (i = 0; i (window.jQuery||document.write(\"\\u003Cscript src=\\u0022/lib/jquery/dist/jquery.min.js\\u0022 crossorigin=\\u0022anonymous\\u0022 integrity=\\u0022sha384-K\\u002BctZQ\\u002BLL8q6tP7I94W\\u002BqzQsfRV2a\\u002BAfHIi9k8z8l9ggpc8X\\u002BYtst4yBo/hH\\u002B8Fk\\u0022\\u003E\\u003C/script\\u003E\")); (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal||document.write(\"\\u003Cscript src=\\u0022/lib/bootstrap/dist/js/bootstrap.min.js\\u0022 crossorigin=\\u0022anonymous\\u0022 integrity=\\u0022sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa\\u0022\\u003E\\u003C/script\\u003E\"));",
-   "lastGoodAt": "2026-11-07T08:40:39.115Z"
+   "checkInNote": "class=\"row customerNotes\"> Latest check-in time Foot passengers: the latest check-in time for all sailings is no later than 40 minutes before the scheduled departure times. Vehicles: the latest check-in time for all sailings is no later that 30 minutes before the scheduled departure times. Premium customers should check-in at least 45 minutes before the scheduled departure times. //Called in site.js var d = new Date(2026,11,7,9,51); var offset = d.getTimezoneOffset(); var fd = new Date(d.getTime() - offset * 60000); document.getElementById('x').innerHTML = (fd.getDate().toString().length == 1 ? '0' + fd.getDate() : fd.getDate()) + '.' + (fd.getMonth().toString().length == 1 ? '0' + fd.getMonth() : fd.getMonth()) + '.' + fd.getFullYear().toString().substr(2, 2) + ' ' + (fd.getHours().toString().length == 1 ? '0' + fd.getHours() : fd.getHours()) + ':' + (fd.getMinutes().toString().length == 1 ? '0' + fd.getMinutes() : fd.getMinutes()); function setCorrrectTab() { var todaysDate = new Date(2026, 10, 7); var currDay = todaysDate.getFullYear().toString() + (todaysDate.getMonth() + 1).toString().padStart(2, '0') + todaysDate.getDate().toString().padStart(2, '0'); document.querySelectorAll('[data-day]').forEach(function (i) { i.classList.remove(\"active\"); }) var className = \"dDay-\" + currDay; var activeTab = document.getElementsByClassName(className)[0]; activeTab.classList.add(\"active\"); var activeTabId = activeTab.querySelector('[data-toggle]').getAttribute('href').substr(1); var activePane = document.getElementsByClassName('tab-pane active'); for (i = 0; i (window.jQuery||document.write(\"\\u003Cscript src=\\u0022/lib/jquery/dist/jquery.min.js\\u0022 crossorigin=\\u0022anonymous\\u0022 integrity=\\u0022sha384-K\\u002BctZQ\\u002BLL8q6tP7I94W\\u002BqzQsfRV2a\\u002BAfHIi9k8z8l9ggpc8X\\u002BYtst4yBo/hH\\u002B8Fk\\u0022\\u003E\\u003C/script\\u003E\")); (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal||document.write(\"\\u003Cscript src=\\u0022/lib/bootstrap/dist/js/bootstrap.min.js\\u0022 crossorigin=\\u0022anonymous\\u0022 integrity=\\u0022sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa\\u0022\\u003E\\u003C/script\\u003E\"));",
+   "lastGoodAt": "2026-11-07T15:37:10.090Z"
   },
   "stena-ferrycheck-7": {
    "url": "https://stenalineferrycheck.azurewebsites.net/RouteInfo/details?id=7",
@@ -55,9 +55,9 @@
    "routeIds": [
     "stena-RSL-FGD"
    ],
-   "attemptedAt": "2026-11-07T08:40:39.115Z",
+   "attemptedAt": "2026-11-07T15:37:10.090Z",
    "ok": true,
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "httpStatus": 200,
    "error": null,
    "warnings": [],
@@ -67,8 +67,8 @@
    ],
    "sailingsSeen": 4,
    "checkInMin": 30,
-   "checkInNote": "class=\"row customerNotes\"> Latest check-in time Check-in opens 2 hours before departure. Foot passengers: the latest check-in time for all sailings is no later than 40 minutes before the scheduled departure times. Vehicles: the latest check-in time for all sailings is no later that 30 minutes before the scheduled departure times. Premium customers should check-in at least 75 minutes before the scheduled departure times. //Called in site.js var d = new Date(2026,11,7,8,20); var offset = d.getTimezoneOffset(); var fd = new Date(d.getTime() - offset * 60000); document.getElementById('x').innerHTML = (fd.getDate().toString().length == 1 ? '0' + fd.getDate() : fd.getDate()) + '.' + (fd.getMonth().toString().length == 1 ? '0' + fd.getMonth() : fd.getMonth()) + '.' + fd.getFullYear().toString().substr(2, 2) + ' ' + (fd.getHours().toString().length == 1 ? '0' + fd.getHours() : fd.getHours()) + ':' + (fd.getMinutes().toString().length == 1 ? '0' + fd.getMinutes() : fd.getMinutes()); function setCorrrectTab() { var todaysDate = new Date(2026, 10, 7); var currDay = todaysDate.getFullYear().toString() + (todaysDate.getMonth() + 1).toString().padStart(2, '0') + todaysDate.getDate().toString().padStart(2, '0'); document.querySelectorAll('[data-day]').forEach(function (i) { i.classList.remove(\"active\"); }) var className = \"dDay-\" + currDay; var activeTab = document.getElementsByClassName(className)[0]; activeTab.classList.add(\"active\"); var activeTabId = activeTab.querySelector('[data-toggle]').getAttribute('href').substr(1); var activePane = document.getElementsByClassName('tab-pane active'); for (i = 0; i (window.jQuery||document.write(\"\\u003Cscript src=\\u0022/lib/jquery/dist/jquery.min.js\\u0022 crossorigin=\\u0022anonymous\\u0022 integrity=\\u0022sha384-K\\u002BctZQ\\u002BLL8q6tP7I94W\\u002BqzQsfRV2a\\u002BAfHIi9k8z8l9ggpc8X\\u002BYtst4yBo/hH\\u002B8Fk\\u0022\\u003E\\u003C/script\\u003E\")); (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal||document.write(\"\\u003Cscript src=\\u0022/lib/bootstrap/dist/js/bootstrap.min.js\\u0022 crossorigin=\\u0022anonymous\\u0022 integrity=\\u0022sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa\\u0022\\u003E\\u003C/script\\u003E\"));",
-   "lastGoodAt": "2026-11-07T08:40:39.115Z"
+   "checkInNote": "class=\"row customerNotes\"> Latest check-in time Check-in opens 2 hours before departure. Foot passengers: the latest check-in time for all sailings is no later than 40 minutes before the scheduled departure times. Vehicles: the latest check-in time for all sailings is no later that 30 minutes before the scheduled departure times. Premium customers should check-in at least 75 minutes before the scheduled departure times. //Called in site.js var d = new Date(2026,11,7,14,6); var offset = d.getTimezoneOffset(); var fd = new Date(d.getTime() - offset * 60000); document.getElementById('x').innerHTML = (fd.getDate().toString().length == 1 ? '0' + fd.getDate() : fd.getDate()) + '.' + (fd.getMonth().toString().length == 1 ? '0' + fd.getMonth() : fd.getMonth()) + '.' + fd.getFullYear().toString().substr(2, 2) + ' ' + (fd.getHours().toString().length == 1 ? '0' + fd.getHours() : fd.getHours()) + ':' + (fd.getMinutes().toString().length == 1 ? '0' + fd.getMinutes() : fd.getMinutes()); function setCorrrectTab() { var todaysDate = new Date(2026, 10, 7); var currDay = todaysDate.getFullYear().toString() + (todaysDate.getMonth() + 1).toString().padStart(2, '0') + todaysDate.getDate().toString().padStart(2, '0'); document.querySelectorAll('[data-day]').forEach(function (i) { i.classList.remove(\"active\"); }) var className = \"dDay-\" + currDay; var activeTab = document.getElementsByClassName(className)[0]; activeTab.classList.add(\"active\"); var activeTabId = activeTab.querySelector('[data-toggle]').getAttribute('href').substr(1); var activePane = document.getElementsByClassName('tab-pane active'); for (i = 0; i (window.jQuery||document.write(\"\\u003Cscript src=\\u0022/lib/jquery/dist/jquery.min.js\\u0022 crossorigin=\\u0022anonymous\\u0022 integrity=\\u0022sha384-K\\u002BctZQ\\u002BLL8q6tP7I94W\\u002BqzQsfRV2a\\u002BAfHIi9k8z8l9ggpc8X\\u002BYtst4yBo/hH\\u002B8Fk\\u0022\\u003E\\u003C/script\\u003E\")); (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal||document.write(\"\\u003Cscript src=\\u0022/lib/bootstrap/dist/js/bootstrap.min.js\\u0022 crossorigin=\\u0022anonymous\\u0022 integrity=\\u0022sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa\\u0022\\u003E\\u003C/script\\u003E\"));",
+   "lastGoodAt": "2026-11-07T15:37:10.090Z"
   },
   "stena-ferrycheck-8": {
    "url": "https://stenalineferrycheck.azurewebsites.net/RouteInfo/details?id=8",
@@ -77,9 +77,9 @@
    "routeIds": [
     "stena-FGD-RSL"
    ],
-   "attemptedAt": "2026-11-07T08:40:39.115Z",
+   "attemptedAt": "2026-11-07T15:37:10.090Z",
    "ok": true,
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "httpStatus": 200,
    "error": null,
    "warnings": [],
@@ -89,8 +89,8 @@
    ],
    "sailingsSeen": 4,
    "checkInMin": 60,
-   "checkInNote": "class=\"row customerNotes\"> Latest check-in time Check-in opens 2 hours before departure. Foot passengers: the latest check-in time for all sailings is no later than 60 minutes before the scheduled departure times. Vehicles: the latest check-in time for all sailings is no later that 60 minutes before the scheduled departure times. Premium customers should check-in at least 75 minutes before the scheduled departure times. Notes high freight traffic //Called in site.js var d = new Date(2026,11,6,14,13); var offset = d.getTimezoneOffset(); var fd = new Date(d.getTime() - offset * 60000); document.getElementById('x').innerHTML = (fd.getDate().toString().length == 1 ? '0' + fd.getDate() : fd.getDate()) + '.' + (fd.getMonth().toString().length == 1 ? '0' + fd.getMonth() : fd.getMonth()) + '.' + fd.getFullYear().toString().substr(2, 2) + ' ' + (fd.getHours().toString().length == 1 ? '0' + fd.getHours() : fd.getHours()) + ':' + (fd.getMinutes().toString().length == 1 ? '0' + fd.getMinutes() : fd.getMinutes()); function setCorrrectTab() { var todaysDate = new Date(2026, 10, 7); var currDay = todaysDate.getFullYear().toString() + (todaysDate.getMonth() + 1).toString().padStart(2, '0') + todaysDate.getDate().toString().padStart(2, '0'); document.querySelectorAll('[data-day]').forEach(function (i) { i.classList.remove(\"active\"); }) var className = \"dDay-\" + currDay; var activeTab = document.getElementsByClassName(className)[0]; activeTab.classList.add(\"active\"); var activeTabId = activeTab.querySelector('[data-toggle]').getAttribute('href').substr(1); var activePane = document.getElementsByClassName('tab-pane active'); for (i = 0; i (window.jQuery||document.write(\"\\u003Cscript src=\\u0022/lib/jquery/dist/jquery.min.js\\u0022 crossorigin=\\u0022anonymous\\u0022 integrity=\\u0022sha384-K\\u002BctZQ\\u002BLL8q6tP7I94W\\u002BqzQsfRV2a\\u002BAfHIi9k8z8l9ggpc8X\\u002BYtst4yBo/hH\\u002B8Fk\\u0022\\u003E\\u003C/script\\u003E\")); (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal||document.write(\"\\u003Cscript src=\\u0022/lib/bootstrap/dist/js/bootstrap.min.js\\u0022 crossorigin=\\u0022anonymous\\u0022 integrity=\\u0022sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa\\u0022\\u003E\\u003C/script\\u003E\"));",
-   "lastGoodAt": "2026-11-07T08:40:39.115Z"
+   "checkInNote": "class=\"row customerNotes\"> Latest check-in time Check-in opens 2 hours before departure. Foot passengers: the latest check-in time for all sailings is no later than 60 minutes before the scheduled departure times. Vehicles: the latest check-in time for all sailings is no later that 60 minutes before the scheduled departure times. Premium customers should check-in at least 75 minutes before the scheduled departure times. Notes high freight traffic //Called in site.js var d = new Date(2026,11,7,13,51); var offset = d.getTimezoneOffset(); var fd = new Date(d.getTime() - offset * 60000); document.getElementById('x').innerHTML = (fd.getDate().toString().length == 1 ? '0' + fd.getDate() : fd.getDate()) + '.' + (fd.getMonth().toString().length == 1 ? '0' + fd.getMonth() : fd.getMonth()) + '.' + fd.getFullYear().toString().substr(2, 2) + ' ' + (fd.getHours().toString().length == 1 ? '0' + fd.getHours() : fd.getHours()) + ':' + (fd.getMinutes().toString().length == 1 ? '0' + fd.getMinutes() : fd.getMinutes()); function setCorrrectTab() { var todaysDate = new Date(2026, 10, 7); var currDay = todaysDate.getFullYear().toString() + (todaysDate.getMonth() + 1).toString().padStart(2, '0') + todaysDate.getDate().toString().padStart(2, '0'); document.querySelectorAll('[data-day]').forEach(function (i) { i.classList.remove(\"active\"); }) var className = \"dDay-\" + currDay; var activeTab = document.getElementsByClassName(className)[0]; activeTab.classList.add(\"active\"); var activeTabId = activeTab.querySelector('[data-toggle]').getAttribute('href').substr(1); var activePane = document.getElementsByClassName('tab-pane active'); for (i = 0; i (window.jQuery||document.write(\"\\u003Cscript src=\\u0022/lib/jquery/dist/jquery.min.js\\u0022 crossorigin=\\u0022anonymous\\u0022 integrity=\\u0022sha384-K\\u002BctZQ\\u002BLL8q6tP7I94W\\u002BqzQsfRV2a\\u002BAfHIi9k8z8l9ggpc8X\\u002BYtst4yBo/hH\\u002B8Fk\\u0022\\u003E\\u003C/script\\u003E\")); (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal||document.write(\"\\u003Cscript src=\\u0022/lib/bootstrap/dist/js/bootstrap.min.js\\u0022 crossorigin=\\u0022anonymous\\u0022 integrity=\\u0022sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa\\u0022\\u003E\\u003C/script\\u003E\"));",
+   "lastGoodAt": "2026-11-07T15:37:10.090Z"
   },
   "irish-dublin-holyhead": {
    "url": "https://www.irishferries.com/ie-en/sailing-updates/dublin-holyhead/",
@@ -100,9 +100,9 @@
     "irish-DUB-HHD",
     "irish-HHD-DUB"
    ],
-   "attemptedAt": "2026-11-07T08:40:39.115Z",
+   "attemptedAt": "2026-11-07T15:37:10.090Z",
    "ok": true,
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "httpStatus": 200,
    "error": null,
    "warnings": [],
@@ -115,7 +115,7 @@
    "sailingsSeen": 32,
    "checkInMin": 30,
    "checkInNote": "All sailings are shown in local times. Latest check in 30 minutes before departure",
-   "lastGoodAt": "2026-11-07T08:40:39.115Z"
+   "lastGoodAt": "2026-11-07T15:37:10.090Z"
   },
   "irish-rosslare-pembroke": {
    "url": "https://www.irishferries.com/ie-en/sailing-updates/rosslare-pembroke/",
@@ -125,9 +125,9 @@
     "irish-RSL-PEM",
     "irish-PEM-RSL"
    ],
-   "attemptedAt": "2026-11-07T08:40:39.115Z",
+   "attemptedAt": "2026-11-07T15:37:10.090Z",
    "ok": true,
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "httpStatus": 200,
    "error": null,
    "warnings": [],
@@ -140,28 +140,28 @@
    "sailingsSeen": 16,
    "checkInMin": 30,
    "checkInNote": "All sailings are shown in local times. Latest check in 30 minutes before departure",
-   "lastGoodAt": "2026-11-07T08:40:39.115Z"
+   "lastGoodAt": "2026-11-07T15:37:10.090Z"
   }
  },
  "coverage": {
   "irish-DUB-HHD|2026-11-06": {
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-06": {
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-RSL-PEM|2026-11-06": {
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-PEM-RSL|2026-11-06": {
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-DUB-HHD|2026-11-06": {
@@ -186,102 +186,102 @@
   },
   "irish-DUB-HHD|2026-11-07": {
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-07": {
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-RSL-PEM|2026-11-07": {
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-PEM-RSL|2026-11-07": {
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-DUB-HHD|2026-11-07": {
    "source": "stena-ferrycheck-5",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-HHD-DUB|2026-11-07": {
    "source": "stena-ferrycheck-6",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-RSL-FGD|2026-11-07": {
    "source": "stena-ferrycheck-7",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-FGD-RSL|2026-11-07": {
    "source": "stena-ferrycheck-8",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-08": {
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-08": {
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-RSL-PEM|2026-11-08": {
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-PEM-RSL|2026-11-08": {
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-DUB-HHD|2026-11-08": {
    "source": "stena-ferrycheck-5",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-HHD-DUB|2026-11-08": {
    "source": "stena-ferrycheck-6",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-RSL-FGD|2026-11-08": {
    "source": "stena-ferrycheck-7",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-FGD-RSL|2026-11-08": {
    "source": "stena-ferrycheck-8",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-09": {
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-09": {
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-RSL-PEM|2026-11-09": {
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-PEM-RSL|2026-11-09": {
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   }
  },
@@ -582,7 +582,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-5",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-DUB-HHD|2026-11-07|10:15": {
@@ -605,7 +605,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-5",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-DUB-HHD|2026-11-07|16:30": {
@@ -628,7 +628,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-5",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-DUB-HHD|2026-11-07|22:30": {
@@ -651,7 +651,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-5",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-DUB-HHD|2026-11-08|10:15": {
@@ -674,7 +674,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-5",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-DUB-HHD|2026-11-08|16:30": {
@@ -697,7 +697,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-5",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-DUB-HHD|2026-11-08|22:30": {
@@ -720,7 +720,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-5",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-HHD-DUB|2026-11-07|04:00": {
@@ -733,9 +733,9 @@
    "arr": "07:30",
    "arrDate": "2026-11-07",
    "ship": "Stena Adventurer",
-   "statusLabel": "Departed",
-   "statusCode": "7",
-   "status": "departed",
+   "statusLabel": "On Time",
+   "statusCode": "14",
+   "status": "on-time",
    "notice": null,
    "originalDep": null,
    "revisedDep": null,
@@ -743,7 +743,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-6",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-HHD-DUB|2026-11-07|10:00": {
@@ -756,9 +756,9 @@
    "arr": "13:30",
    "arrDate": "2026-11-07",
    "ship": "Stena Estrid",
-   "statusLabel": "On Time",
-   "statusCode": "14",
-   "status": "on-time",
+   "statusLabel": "Departed",
+   "statusCode": "7",
+   "status": "departed",
    "notice": null,
    "originalDep": null,
    "revisedDep": null,
@@ -766,7 +766,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-6",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-HHD-DUB|2026-11-07|16:00": {
@@ -789,7 +789,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-6",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-HHD-DUB|2026-11-07|22:15": {
@@ -812,7 +812,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-6",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-HHD-DUB|2026-11-08|10:00": {
@@ -835,7 +835,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-6",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-HHD-DUB|2026-11-08|16:00": {
@@ -858,7 +858,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-6",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-HHD-DUB|2026-11-08|22:15": {
@@ -881,7 +881,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-6",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-RSL-FGD|2026-11-07|08:15": {
@@ -904,7 +904,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-7",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-RSL-FGD|2026-11-07|19:30": {
@@ -927,7 +927,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-7",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-RSL-FGD|2026-11-08|08:15": {
@@ -950,7 +950,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-7",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-RSL-FGD|2026-11-08|19:30": {
@@ -973,7 +973,7 @@
    "replacement": null,
    "checkInMin": 30,
    "source": "stena-ferrycheck-7",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-FGD-RSL|2026-11-07|01:30": {
@@ -996,7 +996,7 @@
    "replacement": null,
    "checkInMin": 60,
    "source": "stena-ferrycheck-8",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-FGD-RSL|2026-11-07|14:00": {
@@ -1009,17 +1009,17 @@
    "arr": "17:30",
    "arrDate": "2026-11-07",
    "ship": "Stena Nordica",
-   "statusLabel": "On Time",
-   "statusCode": "14",
-   "status": "on-time",
-   "notice": null,
+   "statusLabel": "Departed",
+   "statusCode": "7",
+   "status": "departed",
+   "notice": "More info &gt; IMPORTANT information - Your sailing on XX XXXXX from Fishguard to Rosslare has been re-timed to xx:xx with an arrival time of xx:xx due to adverse weather/a technical issue. You don t need to take any action if this time is suitable. If this time is not suitable, you can amend your booking online free of charge. Please take care when amending as we may not be able to fulfil all aspects of your booking such as Cabins, Stena Plus and Pets on other departure. Or if you would like to discuss alternative options, please contact us on 44 3447 707070 or 353 1871 4711. Our phone lines are open from 08:00hrs - 22:00hrs. We sincerely apologise for any inconvenience this may cause.",
    "originalDep": null,
    "revisedDep": null,
    "estimatedDep": null,
    "replacement": null,
    "checkInMin": 60,
    "source": "stena-ferrycheck-8",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-FGD-RSL|2026-11-08|01:30": {
@@ -1042,7 +1042,7 @@
    "replacement": null,
    "checkInMin": 60,
    "source": "stena-ferrycheck-8",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "stena-FGD-RSL|2026-11-08|14:00": {
@@ -1065,7 +1065,7 @@
    "replacement": null,
    "checkInMin": 60,
    "source": "stena-ferrycheck-8",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-06|02:00": {
@@ -1087,7 +1087,7 @@
    "checkInMin": 30,
    "tab": "yesterday",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-06|08:05": {
@@ -1109,7 +1109,7 @@
    "checkInMin": 30,
    "tab": "yesterday",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-06|14:30": {
@@ -1131,7 +1131,7 @@
    "checkInMin": 30,
    "tab": "yesterday",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-06|20:55": {
@@ -1153,7 +1153,7 @@
    "checkInMin": 30,
    "tab": "yesterday",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-06|02:40": {
@@ -1175,7 +1175,7 @@
    "checkInMin": 30,
    "tab": "yesterday",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-06|08:15": {
@@ -1197,7 +1197,7 @@
    "checkInMin": 30,
    "tab": "yesterday",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-06|14:10": {
@@ -1219,7 +1219,7 @@
    "checkInMin": 30,
    "tab": "yesterday",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-06|20:15": {
@@ -1241,7 +1241,7 @@
    "checkInMin": 30,
    "tab": "yesterday",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-07|02:00": {
@@ -1263,7 +1263,7 @@
    "checkInMin": 30,
    "tab": "today",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-07|08:05": {
@@ -1276,8 +1276,8 @@
    "arr": "11:00",
    "arrDate": "2026-11-07",
    "ship": "Ulysses",
-   "statusLabel": "Departed",
-   "status": "departed",
+   "statusLabel": "Arrived",
+   "status": "arrived",
    "notice": "We wish to advise that for operational reasons your 07/11/2026 08:05 Dublin to Holyhead Ulysses sailing will depart at earlier time of 07:30. Latest check-in time is 30 minutes before departure. See www.irishferries.com for contact details.",
    "originalDep": "08:05",
    "revisedDep": null,
@@ -1285,7 +1285,7 @@
    "checkInMin": 30,
    "tab": "today",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-07|14:30": {
@@ -1298,8 +1298,8 @@
    "arr": "17:15",
    "arrDate": "2026-11-07",
    "ship": "James Joyce",
-   "statusLabel": "Early Sailing",
-   "status": "early",
+   "statusLabel": "Departed",
+   "status": "departed",
    "notice": "We wish to advise that for operational reasons your 07/11/2026 14:30 Dublin to Holyhead James Joyce sailing will depart at earlier time of 13:45. Latest check-in time is 30 minutes before departure. See www.irishferries.com for contact details.",
    "originalDep": "14:30",
    "revisedDep": null,
@@ -1307,7 +1307,7 @@
    "checkInMin": 30,
    "tab": "today",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-07|20:55": {
@@ -1329,7 +1329,7 @@
    "checkInMin": 30,
    "tab": "today",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-07|02:40": {
@@ -1351,7 +1351,7 @@
    "checkInMin": 30,
    "tab": "today",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-07|08:15": {
@@ -1364,8 +1364,8 @@
    "arr": "11:00",
    "arrDate": "2026-11-07",
    "ship": "James Joyce",
-   "statusLabel": "Departed",
-   "status": "departed",
+   "statusLabel": "Arrived",
+   "status": "arrived",
    "notice": "We wish to advise that for operational reasons your 07/11/2026 08:15 Holyhead to Dublin James Joyce sailing will depart at earlier time of 07:30. Latest check-in time is 30 minutes before departure. See www.irishferries.com for contact details.",
    "originalDep": "08:15",
    "revisedDep": null,
@@ -1373,7 +1373,7 @@
    "checkInMin": 30,
    "tab": "today",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-07|14:10": {
@@ -1386,8 +1386,8 @@
    "arr": "16:45",
    "arrDate": "2026-11-07",
    "ship": "Ulysses",
-   "statusLabel": "Early Sailing",
-   "status": "early",
+   "statusLabel": "Departed",
+   "status": "departed",
    "notice": "We wish to advise that for operational reasons your 07/11/2026 14:10 Holyhead to Dublin Ulysses sailing will depart at earlier time of 13:15. Latest check-in time is 30 minutes before departure. See www.irishferries.com for contact details.",
    "originalDep": "14:10",
    "revisedDep": null,
@@ -1395,7 +1395,7 @@
    "checkInMin": 30,
    "tab": "today",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-07|20:15": {
@@ -1417,7 +1417,7 @@
    "checkInMin": 30,
    "tab": "today",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-08|02:00": {
@@ -1439,7 +1439,7 @@
    "checkInMin": 30,
    "tab": "tomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-08|08:05": {
@@ -1461,7 +1461,7 @@
    "checkInMin": 30,
    "tab": "tomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-08|14:30": {
@@ -1483,7 +1483,7 @@
    "checkInMin": 30,
    "tab": "tomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-08|20:55": {
@@ -1505,7 +1505,7 @@
    "checkInMin": 30,
    "tab": "tomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-08|02:40": {
@@ -1527,7 +1527,7 @@
    "checkInMin": 30,
    "tab": "tomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-08|08:15": {
@@ -1549,7 +1549,7 @@
    "checkInMin": 30,
    "tab": "tomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-08|14:10": {
@@ -1571,7 +1571,7 @@
    "checkInMin": 30,
    "tab": "tomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-08|20:15": {
@@ -1593,7 +1593,7 @@
    "checkInMin": 30,
    "tab": "tomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-09|02:00": {
@@ -1615,7 +1615,7 @@
    "checkInMin": 30,
    "tab": "dayaftertomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-09|08:05": {
@@ -1637,7 +1637,7 @@
    "checkInMin": 30,
    "tab": "dayaftertomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-09|14:30": {
@@ -1659,7 +1659,7 @@
    "checkInMin": 30,
    "tab": "dayaftertomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-DUB-HHD|2026-11-09|20:55": {
@@ -1681,7 +1681,7 @@
    "checkInMin": 30,
    "tab": "dayaftertomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-09|02:40": {
@@ -1703,7 +1703,7 @@
    "checkInMin": 30,
    "tab": "dayaftertomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-09|08:15": {
@@ -1725,7 +1725,7 @@
    "checkInMin": 30,
    "tab": "dayaftertomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-09|14:10": {
@@ -1747,7 +1747,7 @@
    "checkInMin": 30,
    "tab": "dayaftertomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-HHD-DUB|2026-11-09|20:15": {
@@ -1769,7 +1769,7 @@
    "checkInMin": 30,
    "tab": "dayaftertomorrow",
    "source": "irish-dublin-holyhead",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-RSL-PEM|2026-11-06|08:45": {
@@ -1794,7 +1794,7 @@
    "checkInMin": 60,
    "tab": "yesterday",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-RSL-PEM|2026-11-06|20:45": {
@@ -1819,7 +1819,7 @@
    "checkInMin": 60,
    "tab": "yesterday",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-PEM-RSL|2026-11-06|02:45": {
@@ -1844,7 +1844,7 @@
    "checkInMin": 60,
    "tab": "yesterday",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-PEM-RSL|2026-11-06|14:45": {
@@ -1869,7 +1869,7 @@
    "checkInMin": 60,
    "tab": "yesterday",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-RSL-PEM|2026-11-07|08:45": {
@@ -1894,7 +1894,7 @@
    "checkInMin": 60,
    "tab": "today",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-RSL-PEM|2026-11-07|20:45": {
@@ -1907,16 +1907,19 @@
    "arr": "00:46",
    "arrDate": "2026-11-08",
    "ship": "Isle of Innisfree",
-   "statusLabel": "No Sailing",
-   "status": "other",
-   "notice": null,
+   "statusLabel": "On Time",
+   "status": "on-time",
+   "notice": "We wish to advise that your sailing on 07/11/2026 20:45 will now be on the StenaLine sailing to Fishguard instead of your pre-booked Isle of Innisfree and at the earlier departure time of 19:30. Please check in 1 hour before departure. See www.irishferries.com for contact details.",
    "originalDep": null,
-   "revisedDep": null,
-   "replacement": null,
-   "checkInMin": 30,
+   "revisedDep": "19:30",
+   "replacement": {
+    "operator": "stena",
+    "port": "Fishguard"
+   },
+   "checkInMin": 60,
    "tab": "today",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-PEM-RSL|2026-11-07|02:45": {
@@ -1941,7 +1944,7 @@
    "checkInMin": 60,
    "tab": "today",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-PEM-RSL|2026-11-07|14:45": {
@@ -1966,7 +1969,7 @@
    "checkInMin": 60,
    "tab": "today",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-RSL-PEM|2026-11-08|08:45": {
@@ -1991,7 +1994,7 @@
    "checkInMin": 60,
    "tab": "tomorrow",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-RSL-PEM|2026-11-08|20:45": {
@@ -2016,7 +2019,7 @@
    "checkInMin": 60,
    "tab": "tomorrow",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-PEM-RSL|2026-11-08|02:45": {
@@ -2029,16 +2032,19 @@
    "arr": "06:46",
    "arrDate": "2026-11-08",
    "ship": "Isle of Innisfree",
-   "statusLabel": "No Sailing",
-   "status": "other",
-   "notice": null,
+   "statusLabel": "On Time",
+   "status": "on-time",
+   "notice": "We wish to advise that your sailing on 08/11/2026 02:45 will now be on the StenaLine sailing from Fishguard instead of your pre-booked Isle of Innisfree and at the earlier departure time of 01:30. Please check in 1 hour before departure. See www.irishferries.com for contact details.",
    "originalDep": null,
-   "revisedDep": null,
-   "replacement": null,
-   "checkInMin": 30,
+   "revisedDep": "01:30",
+   "replacement": {
+    "operator": "stena",
+    "port": "Fishguard"
+   },
+   "checkInMin": 60,
    "tab": "tomorrow",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-PEM-RSL|2026-11-08|14:45": {
@@ -2063,7 +2069,7 @@
    "checkInMin": 60,
    "tab": "tomorrow",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-RSL-PEM|2026-11-09|08:45": {
@@ -2088,7 +2094,7 @@
    "checkInMin": 60,
    "tab": "dayaftertomorrow",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-RSL-PEM|2026-11-09|20:45": {
@@ -2113,7 +2119,7 @@
    "checkInMin": 60,
    "tab": "dayaftertomorrow",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-PEM-RSL|2026-11-09|02:45": {
@@ -2138,7 +2144,7 @@
    "checkInMin": 60,
    "tab": "dayaftertomorrow",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   },
   "irish-PEM-RSL|2026-11-09|14:45": {
@@ -2163,7 +2169,7 @@
    "checkInMin": 60,
    "tab": "dayaftertomorrow",
    "source": "irish-rosslare-pembroke",
-   "fetchedAt": "2026-11-07T08:40:39.115Z",
+   "fetchedAt": "2026-11-07T15:37:10.090Z",
    "operatorUpdatedAt": null
   }
  },
