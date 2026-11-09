@@ -1,5 +1,5 @@
 {
-  "updatedOn": "2026-11-08",
+  "updatedOn": "2026-11-09",
   "watchingSince": "2026-11-04",
   "source": "Irish Ferries sailing-updates status tables",
   "fastShipsSeen": {
@@ -10,73 +10,73 @@
       "ship": "James Joyce",
       "arr": "04:45",
       "status": "Early Sailing",
-      "seenOn": "2026-11-08"
+      "seenOn": "2026-11-09"
     },
     "irish-DUB-HHD|07:30": {
       "ship": "Ulysses",
       "arr": "11:00",
       "status": "Early Sailing",
-      "seenOn": "2026-11-08"
+      "seenOn": "2026-11-09"
     },
     "irish-DUB-HHD|13:45": {
       "ship": "James Joyce",
       "arr": "17:15",
       "status": "Early Sailing",
-      "seenOn": "2026-11-08"
+      "seenOn": "2026-11-09"
     },
     "irish-DUB-HHD|19:45": {
       "ship": "Ulysses",
       "arr": "23:15",
       "status": "Early Sailing",
-      "seenOn": "2026-11-08"
+      "seenOn": "2026-11-09"
     },
     "irish-HHD-DUB|01:30": {
       "ship": "Ulysses",
       "arr": "05:00",
       "status": "Early Sailing",
-      "seenOn": "2026-11-08"
+      "seenOn": "2026-11-09"
     },
     "irish-HHD-DUB|07:30": {
       "ship": "James Joyce",
       "arr": "11:00",
       "status": "Early Sailing",
-      "seenOn": "2026-11-08"
+      "seenOn": "2026-11-09"
     },
     "irish-HHD-DUB|13:15": {
       "ship": "Ulysses",
       "arr": "16:45",
       "status": "Early Sailing",
-      "seenOn": "2026-11-08"
+      "seenOn": "2026-11-09"
     },
     "irish-HHD-DUB|19:30": {
       "ship": "James Joyce",
       "arr": "23:00",
       "status": "Early Sailing",
-      "seenOn": "2026-11-08"
+      "seenOn": "2026-11-09"
     },
     "irish-RSL-PEM|08:45": {
       "ship": "Isle of Innisfree",
       "arr": "12:46",
       "status": "On Time",
-      "seenOn": "2026-11-08"
+      "seenOn": "2026-11-09"
     },
     "irish-RSL-PEM|20:45": {
       "ship": "Isle of Innisfree",
       "arr": "00:46",
       "status": "On Time",
-      "seenOn": "2026-11-08"
+      "seenOn": "2026-11-09"
     },
     "irish-PEM-RSL|02:45": {
       "ship": "Isle of Innisfree",
       "arr": "06:46",
       "status": "On Time",
-      "seenOn": "2026-11-08"
+      "seenOn": "2026-11-09"
     },
     "irish-PEM-RSL|14:45": {
       "ship": "Isle of Innisfree",
       "arr": "18:46",
       "status": "On Time",
-      "seenOn": "2026-11-08"
+      "seenOn": "2026-11-09"
     }
   },
   "unscheduled": []
