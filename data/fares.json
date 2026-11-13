@@ -1,11 +1,11 @@
 {
-  "fetchedAt": "2026-11-12T12:54:05.945Z",
-  "fetchedOn": "2026-11-12",
+  "fetchedAt": "2026-11-13T12:20:50.387Z",
+  "fetchedOn": "2026-11-13",
   "source": "AFerry public route pages (www.aferry.com/en-gb/<route>/)",
   "routes": {
     "HHD-DUB": {
       "url": "https://www.aferry.com/en-gb/holyhead-dublin/",
-      "fetchedOn": "2026-11-12",
+      "fetchedOn": "2026-11-13",
       "monthly": {
         "1": {
           "amount": 167,
@@ -48,7 +48,7 @@
           "season": "Mid-Season"
         },
         "11": {
-          "amount": 169,
+          "amount": 170,
           "season": "Off-Peak"
         },
         "12": {
@@ -63,7 +63,7 @@
           "weeklySailings": 28
         },
         "stena": {
-          "amount": 171,
+          "amount": 175,
           "duration": "3h 30min",
           "weeklySailings": 26
         }
@@ -71,7 +71,7 @@
     },
     "DUB-HHD": {
       "url": "https://www.aferry.com/en-gb/dublin-holyhead/",
-      "fetchedOn": "2026-11-12",
+      "fetchedOn": "2026-11-13",
       "monthly": {
         "1": {
           "amount": 171,
@@ -124,12 +124,12 @@
       },
       "operatorAvg": {
         "irish": {
-          "amount": 173,
+          "amount": 174,
           "duration": "3h 30min",
           "weeklySailings": 28
         },
         "stena": {
-          "amount": 184,
+          "amount": 183,
           "duration": "3h 30min",
           "weeklySailings": 26
         }
@@ -137,7 +137,7 @@
     },
     "FGD-RSL": {
       "url": "https://www.aferry.com/en-gb/fishguard-rosslare/",
-      "fetchedOn": "2026-11-12",
+      "fetchedOn": "2026-11-13",
       "monthly": {
         "1": {
           "amount": 199,
@@ -180,17 +180,17 @@
           "season": "Off-Peak"
         },
         "11": {
-          "amount": 196,
-          "season": "Mid-Season"
+          "amount": 194,
+          "season": "Off-Peak"
         },
         "12": {
           "amount": 195,
-          "season": "Off-Peak"
+          "season": "Mid-Season"
         }
       },
       "operatorAvg": {
         "stena": {
-          "amount": 177,
+          "amount": 189,
           "duration": "3h 44min",
           "weeklySailings": 14
         }
@@ -198,7 +198,7 @@
     },
     "RSL-FGD": {
       "url": "https://www.aferry.com/en-gb/rosslare-fishguard/",
-      "fetchedOn": "2026-11-12",
+      "fetchedOn": "2026-11-13",
       "monthly": {
         "1": {
           "amount": 207,
@@ -259,7 +259,7 @@
     },
     "PEM-RSL": {
       "url": "https://www.aferry.com/en-gb/pembroke-rosslare/",
-      "fetchedOn": "2026-11-12",
+      "fetchedOn": "2026-11-13",
       "monthly": {
         "1": {
           "amount": 192,
@@ -320,7 +320,7 @@
     },
     "RSL-PEM": {
       "url": "https://www.aferry.com/en-gb/rosslare-pembroke/",
-      "fetchedOn": "2026-11-12",
+      "fetchedOn": "2026-11-13",
       "monthly": {
         "1": {
           "amount": 392,
@@ -373,7 +373,7 @@
       },
       "operatorAvg": {
         "irish": {
-          "amount": 153,
+          "amount": 165,
           "duration": "4h 1min",
           "weeklySailings": 13
         }
@@ -385,63 +385,23 @@
       "amount": 189,
       "currency": "GBP",
       "date": "2026-11-14",
-      "seenOn": "2026-11-12",
+      "seenOn": "2026-11-13",
       "source": "AFerry latest ticket price",
       "url": "https://www.aferry.com/en-gb/rosslare-fishguard/"
-    },
-    "irish-HHD-DUB|2026-11-12|07:30": {
-      "amount": 183,
-      "currency": "GBP",
-      "date": "2026-11-12",
-      "seenOn": "2026-11-11",
-      "source": "AFerry latest ticket price",
-      "url": "https://www.aferry.com/en-gb/holyhead-dublin/"
-    },
-    "stena-HHD-DUB|2026-11-12|16:00": {
-      "amount": 165,
-      "currency": "GBP",
-      "date": "2026-11-12",
-      "seenOn": "2026-11-12",
-      "source": "AFerry latest ticket price",
-      "url": "https://www.aferry.com/en-gb/holyhead-dublin/"
-    },
-    "stena-DUB-HHD|2026-11-12|04:30": {
-      "amount": 169,
-      "currency": "GBP",
-      "date": "2026-11-12",
-      "seenOn": "2026-11-11",
-      "source": "AFerry latest ticket price",
-      "url": "https://www.aferry.com/en-gb/dublin-holyhead/"
-    },
-    "irish-HHD-DUB|2026-11-12|19:30": {
-      "amount": 166,
-      "currency": "GBP",
-      "date": "2026-11-12",
-      "seenOn": "2026-11-12",
-      "source": "AFerry latest ticket price",
-      "url": "https://www.aferry.com/en-gb/holyhead-dublin/"
     },
     "irish-HHD-DUB|2026-11-13|13:15": {
       "amount": 158,
       "currency": "GBP",
       "date": "2026-11-13",
-      "seenOn": "2026-11-12",
+      "seenOn": "2026-11-13",
       "source": "AFerry latest ticket price",
       "url": "https://www.aferry.com/en-gb/holyhead-dublin/"
-    },
-    "irish-DUB-HHD|2026-11-12|19:45": {
-      "amount": 161.67,
-      "currency": "GBP",
-      "date": "2026-11-12",
-      "seenOn": "2026-11-12",
-      "source": "AFerry latest ticket price",
-      "url": "https://www.aferry.com/en-gb/dublin-holyhead/"
     },
     "irish-DUB-HHD|2026-11-15|13:45": {
       "amount": 167.5,
       "currency": "GBP",
       "date": "2026-11-15",
-      "seenOn": "2026-11-12",
+      "seenOn": "2026-11-13",
       "source": "AFerry latest ticket price",
       "url": "https://www.aferry.com/en-gb/dublin-holyhead/"
     },
@@ -460,6 +420,62 @@
       "seenOn": "2026-11-12",
       "source": "AFerry latest ticket price",
       "url": "https://www.aferry.com/en-gb/pembroke-rosslare/"
+    },
+    "stena-HHD-DUB|2026-11-13|16:00": {
+      "amount": 159,
+      "currency": "GBP",
+      "date": "2026-11-13",
+      "seenOn": "2026-11-13",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/holyhead-dublin/"
+    },
+    "irish-HHD-DUB|2026-11-13|19:30": {
+      "amount": 172,
+      "currency": "GBP",
+      "date": "2026-11-13",
+      "seenOn": "2026-11-13",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/holyhead-dublin/"
+    },
+    "stena-DUB-HHD|2026-11-13|22:30": {
+      "amount": 159,
+      "currency": "GBP",
+      "date": "2026-11-13",
+      "seenOn": "2026-11-13",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/dublin-holyhead/"
+    },
+    "irish-DUB-HHD|2026-11-16|07:30": {
+      "amount": 164.17,
+      "currency": "GBP",
+      "date": "2026-11-16",
+      "seenOn": "2026-11-13",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/dublin-holyhead/"
+    },
+    "stena-FGD-RSL|2026-11-14|01:30": {
+      "amount": 175,
+      "currency": "GBP",
+      "date": "2026-11-14",
+      "seenOn": "2026-11-13",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/fishguard-rosslare/"
+    },
+    "stena-FGD-RSL|2026-11-19|14:00": {
+      "amount": 175,
+      "currency": "GBP",
+      "date": "2026-11-19",
+      "seenOn": "2026-11-13",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/fishguard-rosslare/"
+    },
+    "irish-RSL-PEM|2026-11-13|20:45": {
+      "amount": 326,
+      "currency": "GBP",
+      "date": "2026-11-13",
+      "seenOn": "2026-11-13",
+      "source": "AFerry latest ticket price",
+      "url": "https://www.aferry.com/en-gb/rosslare-pembroke/"
     }
   }
 }
