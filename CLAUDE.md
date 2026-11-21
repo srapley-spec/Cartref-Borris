@@ -47,6 +47,17 @@ Settings (localStorage) and, for verification in cloud sessions, the environment
   run is green before telling Sam it's done. Live URL: https://cartref-borris.s-rapley.workers.dev
 - Identify honestly (`UA` in `tools/aferry-search.mjs`); never disguise the client or work around a site's bot checks.
 
+## Release notes (Sam, 21 Nov 2026; how-we-work RULES 16)
+
+Sam (21 Nov 2026): "We need release notes for every release. They can be brief and need to summarise what fixes or changes have been introduced."
+
+- **What counts as a release here:** each publish of `main` to GitHub Pages and each Worker redeploy (Workers Builds, on push to `main`).
+- **Where:** `docs/release-notes.md`, newest first. A change that alters what the app or Worker does adds its entry **in the same pull request or commit**: date, what it reaches (app, Worker), then one short line per item under **Fixes** and **Changes**, and the pull request number if there is one. Write for the person using the app, not for the code.
+- **Nothing released** (tests, docs, CI, bot-written data only): no entry; say `Release note: none — <reason>` in the pull request description or commit message.
+- **Public repository:** no addresses, family details or travel dates in the notes.
+- **Found a release with no notes?** Write them from the merged changes and tell Sam.
+
+
 ## Build, test, release
 - No build step: `index.html` loads `src/app.js` as an ES module. GitHub Pages serves `main` from the root.
 - `npm ci` once (CI), `npm test` runs the engine and browser tests (Playwright/Chromium, `TZ=Europe/London`,
