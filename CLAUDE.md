@@ -1,5 +1,7 @@
 # Cartref Borris: working rules
 
+**Canonical rules:** read `RULES.md` in `srapley-spec/how-we-work`. Its rules supersede conflicting working-mode instructions below (for example "Work on a branch, run `npm test`, merge": the pipeline, or Sam where there is no pipeline, merges).
+
 Read this first, every session. The context for this project lives in this repo, not in any chat.
 
 **Purpose (Sam, 3 Nov 2026):** get Sam (car, 2 adults) from 20 Hitchin Road, Letchworth SG6 3LT to his father's
